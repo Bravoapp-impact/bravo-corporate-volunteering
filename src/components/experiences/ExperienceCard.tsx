@@ -1,0 +1,139 @@
+import { motion } from "framer-motion";
+import { MapPin, Users, Calendar, Clock, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
+import { it } from "date-fns/locale";
+
+interface ExperienceDate {
+  id: string;
+  start_datetime: string;
+  end_datetime: string;
+  max_participants: number;
+  confirmed_count?: number;
+}
+
+interface Experience {
+  id: string;
+  title: string;
+  description: string | null;
+  image_url: string | null;
+  association_name: string | null;
+  city: string | null;
+  address: string | null;
+  category: string | null;
+  experience_dates?: ExperienceDate[];
+}
+
+interface ExperienceCardProps {
+  experience: Experience;
+  index: number;
+  onSelect: (experience: Experience) => void;
+}
+
+export function ExperienceCard({ experience, index, onSelect }: ExperienceCardProps) {
+  const nextDate = experience.experience_dates?.[0];
+  const availableSpots = nextDate
+    ? nextDate.max_participants - (nextDate.confirmed_count || 0)
+    : 0;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: index * 0.1 }}
+      className="group relative bg-card rounded-2xl overflow-hidden border border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-xl hover:shadow-primary/5"
+    >
+      {/* Image */}
+      <div className="relative h-48 overflow-hidden">
+        {experience.image_url ? (
+          <img
+            src={experience.image_url}
+            alt={experience.title}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+            <span className="text-5xl">🤝</span>
+          </div>
+        )}
+        
+        {/* Category badge */}
+        {experience.category && (
+          <Badge
+            variant="secondary"
+            className="absolute top-4 left-4 bg-background/90 backdrop-blur-sm"
+          >
+            {experience.category}
+          </Badge>
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="p-6 space-y-4">
+        {/* Association */}
+        {experience.association_name && (
+          <p className="text-sm font-medium text-primary">
+            {experience.association_name}
+          </p>
+        )}
+
+        {/* Title */}
+        <h3 className="text-xl font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors">
+          {experience.title}
+        </h3>
+
+        {/* Description */}
+        {experience.description && (
+          <p className="text-sm text-muted-foreground line-clamp-2">
+            {experience.description}
+          </p>
+        )}
+
+        {/* Location */}
+        {experience.city && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <MapPin className="h-4 w-4 text-primary/70" />
+            <span>{experience.city}</span>
+          </div>
+        )}
+
+        {/* Next date info */}
+        {nextDate && (
+          <div className="pt-4 border-t border-border/50 space-y-2">
+            <div className="flex items-center gap-2 text-sm">
+              <Calendar className="h-4 w-4 text-primary/70" />
+              <span className="font-medium">
+                {format(new Date(nextDate.start_datetime), "EEEE d MMMM", { locale: it })}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Clock className="h-4 w-4" />
+                <span>
+                  {format(new Date(nextDate.start_datetime), "HH:mm")} -{" "}
+                  {format(new Date(nextDate.end_datetime), "HH:mm")}
+                </span>
+              </div>
+              <div className="flex items-center gap-1 text-sm">
+                <Users className="h-4 w-4 text-primary/70" />
+                <span className={availableSpots <= 3 ? "text-destructive font-medium" : "text-muted-foreground"}>
+                  {availableSpots} posti
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* CTA */}
+        <Button
+          onClick={() => onSelect(experience)}
+          className="w-full mt-4 group/btn"
+        >
+          Scopri e prenota
+          <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover/btn:translate-x-1" />
+        </Button>
+      </div>
+    </motion.div>
+  );
+}
