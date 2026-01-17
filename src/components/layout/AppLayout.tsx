@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { LogOut, Calendar, User } from "lucide-react";
+import { LogOut, Calendar, User, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -19,11 +19,14 @@ interface AppLayoutProps {
 export function AppLayout({ children }: AppLayoutProps) {
   const { profile, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSignOut = async () => {
     await signOut();
     navigate("/login");
   };
+
+  const isActive = (path: string) => location.pathname === path;
 
   return (
     <div className="min-h-screen bg-background bg-pattern">
@@ -40,13 +43,29 @@ export function AppLayout({ children }: AppLayoutProps) {
             </motion.span>
           </Link>
 
-          <nav className="flex items-center gap-6">
+          <nav className="flex items-center gap-2 sm:gap-6">
             <Link
               to="/app/experiences"
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2"
+              className={`text-sm font-medium transition-colors flex items-center gap-2 px-3 py-2 rounded-lg ${
+                isActive("/app/experiences")
+                  ? "text-primary bg-primary/10"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+              }`}
             >
               <Calendar className="h-4 w-4" />
               <span className="hidden sm:inline">Esperienze</span>
+            </Link>
+
+            <Link
+              to="/app/bookings"
+              className={`text-sm font-medium transition-colors flex items-center gap-2 px-3 py-2 rounded-lg ${
+                isActive("/app/bookings")
+                  ? "text-primary bg-primary/10"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+              }`}
+            >
+              <Ticket className="h-4 w-4" />
+              <span className="hidden sm:inline">Prenotazioni</span>
             </Link>
 
             <DropdownMenu>
