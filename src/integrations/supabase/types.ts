@@ -109,28 +109,34 @@ export type Database = {
       }
       experience_dates: {
         Row: {
+          beneficiaries_count: number | null
           created_at: string
           end_datetime: string
           experience_id: string
           id: string
           max_participants: number
           start_datetime: string
+          volunteer_hours: number | null
         }
         Insert: {
+          beneficiaries_count?: number | null
           created_at?: string
           end_datetime: string
           experience_id: string
           id?: string
           max_participants?: number
           start_datetime: string
+          volunteer_hours?: number | null
         }
         Update: {
+          beneficiaries_count?: number | null
           created_at?: string
           end_datetime?: string
           experience_id?: string
           id?: string
           max_participants?: number
           start_datetime?: string
+          volunteer_hours?: number | null
         }
         Relationships: [
           {
@@ -152,6 +158,7 @@ export type Database = {
           description: string | null
           id: string
           image_url: string | null
+          sdgs: string[] | null
           status: string
           title: string
         }
@@ -164,6 +171,7 @@ export type Database = {
           description?: string | null
           id?: string
           image_url?: string | null
+          sdgs?: string[] | null
           status?: string
           title: string
         }
@@ -176,6 +184,7 @@ export type Database = {
           description?: string | null
           id?: string
           image_url?: string | null
+          sdgs?: string[] | null
           status?: string
           title?: string
         }
