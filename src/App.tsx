@@ -5,11 +5,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { ProtectedHRRoute } from "@/components/ProtectedHRRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Experiences from "./pages/Experiences";
 import MyBookings from "./pages/MyBookings";
+import HRDashboard from "./pages/HRDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,6 +41,14 @@ const App = () => (
                 <ProtectedRoute>
                   <MyBookings />
                 </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/hr"
+              element={
+                <ProtectedHRRoute>
+                  <HRDashboard />
+                </ProtectedHRRoute>
               }
             />
             <Route path="*" element={<NotFound />} />
