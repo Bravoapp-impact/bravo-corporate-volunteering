@@ -11,6 +11,7 @@ import {
   Users,
   ChevronDown,
   ChevronUp,
+  Lightbulb,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -55,23 +56,43 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
-import { getAllSDGs, SDGInfo } from "@/lib/sdg-data";
+import { getAllSDGs } from "@/lib/sdg-data";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ExperienceDateDialog } from "@/components/super-admin/ExperienceDateDialog";
+
+interface Association {
+  id: string;
+  name: string;
+}
+
+interface City {
+  id: string;
+  name: string;
+}
+
+interface Category {
+  id: string;
+  name: string;
+  default_sdgs: string[] | null;
+}
 
 interface Experience {
   id: string;
   title: string;
   description: string | null;
   image_url: string | null;
-  association_name: string | null;
-  city: string | null;
+  association_id: string | null;
+  city_id: string | null;
+  category_id: string | null;
   address: string | null;
-  category: string | null;
   status: string;
   sdgs: string[] | null;
   created_at: string;
   experience_dates?: ExperienceDate[];
+  // Legacy fields (kept for display during migration)
+  association_name?: string | null;
+  city?: string | null;
+  category?: string | null;
 }
 
 interface ExperienceDate {
@@ -84,17 +105,6 @@ interface ExperienceDate {
   beneficiaries_count: number | null;
 }
 
-const CATEGORIES = [
-  "ambiente",
-  "sociale",
-  "educazione",
-  "anziani",
-  "animali",
-  "cultura",
-  "sport",
-  "altro",
-];
-
 const STATUS_OPTIONS = [
   { value: "draft", label: "Bozza" },
   { value: "published", label: "Pubblicata" },
@@ -103,6 +113,9 @@ const STATUS_OPTIONS = [
 
 export default function ExperiencesPage() {
   const [experiences, setExperiences] = useState<Experience[]>([]);
+  const [associations, setAssociations] = useState<Association[]>([]);
+  const [cities, setCities] = useState<City[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -112,14 +125,15 @@ export default function ExperiencesPage() {
   const [expandedExperience, setExpandedExperience] = useState<string | null>(null);
   const [dateDialogOpen, setDateDialogOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<ExperienceDate | null>(null);
+  const [suggestedSdgs, setSuggestedSdgs] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     image_url: "",
-    association_name: "",
-    city: "",
+    association_id: "",
+    city_id: "",
+    category_id: "",
     address: "",
-    category: "",
     status: "draft",
     sdgs: [] as string[],
   });
@@ -128,28 +142,64 @@ export default function ExperiencesPage() {
   const allSDGs = getAllSDGs();
 
   useEffect(() => {
-    fetchExperiences();
+    fetchData();
   }, []);
 
-  const fetchExperiences = async () => {
+  const fetchData = async () => {
     try {
-      const { data, error } = await supabase
-        .from("experiences")
-        .select("*, experience_dates(*)")
-        .order("created_at", { ascending: false });
+      const [experiencesRes, associationsRes, citiesRes, categoriesRes] = await Promise.all([
+        supabase
+          .from("experiences")
+          .select("*, experience_dates(*)")
+          .order("created_at", { ascending: false }),
+        supabase.from("associations").select("id, name").order("name"),
+        supabase.from("cities").select("id, name").order("name"),
+        supabase.from("categories").select("id, name, default_sdgs").order("name"),
+      ]);
 
-      if (error) throw error;
-      setExperiences(data || []);
+      if (experiencesRes.error) throw experiencesRes.error;
+      if (associationsRes.error) throw associationsRes.error;
+      if (citiesRes.error) throw citiesRes.error;
+      if (categoriesRes.error) throw categoriesRes.error;
+
+      setExperiences(experiencesRes.data || []);
+      setAssociations(associationsRes.data || []);
+      setCities(citiesRes.data || []);
+      setCategories(categoriesRes.data || []);
     } catch (error) {
-      console.error("Error fetching experiences:", error);
+      console.error("Error fetching data:", error);
       toast({
         variant: "destructive",
         title: "Errore",
-        description: "Impossibile caricare le esperienze",
+        description: "Impossibile caricare i dati",
       });
     } finally {
       setLoading(false);
     }
+  };
+
+  const getAssociationName = (associationId: string | null, legacyName?: string | null) => {
+    if (associationId) {
+      const assoc = associations.find((a) => a.id === associationId);
+      return assoc?.name || "—";
+    }
+    return legacyName || "—";
+  };
+
+  const getCityName = (cityId: string | null, legacyCity?: string | null) => {
+    if (cityId) {
+      const city = cities.find((c) => c.id === cityId);
+      return city?.name || "—";
+    }
+    return legacyCity || "—";
+  };
+
+  const getCategoryName = (categoryId: string | null, legacyCategory?: string | null) => {
+    if (categoryId) {
+      const cat = categories.find((c) => c.id === categoryId);
+      return cat?.name || "—";
+    }
+    return legacyCategory || "—";
   };
 
   const handleOpenDialog = (experience?: Experience) => {
@@ -159,28 +209,42 @@ export default function ExperiencesPage() {
         title: experience.title,
         description: experience.description || "",
         image_url: experience.image_url || "",
-        association_name: experience.association_name || "",
-        city: experience.city || "",
+        association_id: experience.association_id || "",
+        city_id: experience.city_id || "",
+        category_id: experience.category_id || "",
         address: experience.address || "",
-        category: experience.category || "",
         status: experience.status,
         sdgs: experience.sdgs || [],
       });
+      setSuggestedSdgs([]);
     } else {
       setSelectedExperience(null);
       setFormData({
         title: "",
         description: "",
         image_url: "",
-        association_name: "",
-        city: "",
+        association_id: "",
+        city_id: "",
+        category_id: "",
         address: "",
-        category: "",
         status: "draft",
         sdgs: [],
       });
+      setSuggestedSdgs([]);
     }
     setDialogOpen(true);
+  };
+
+  const handleCategoryChange = (categoryId: string) => {
+    setFormData((prev) => ({ ...prev, category_id: categoryId }));
+    
+    // Find category and show suggested SDGs
+    const category = categories.find((c) => c.id === categoryId);
+    if (category?.default_sdgs && category.default_sdgs.length > 0) {
+      setSuggestedSdgs(category.default_sdgs);
+    } else {
+      setSuggestedSdgs([]);
+    }
   };
 
   const handleSave = async () => {
@@ -199,10 +263,10 @@ export default function ExperiencesPage() {
         title: formData.title,
         description: formData.description || null,
         image_url: formData.image_url || null,
-        association_name: formData.association_name || null,
-        city: formData.city || null,
+        association_id: formData.association_id || null,
+        city_id: formData.city_id || null,
+        category_id: formData.category_id || null,
         address: formData.address || null,
-        category: formData.category || null,
         status: formData.status,
         sdgs: formData.sdgs.length > 0 ? formData.sdgs : null,
       };
@@ -231,7 +295,7 @@ export default function ExperiencesPage() {
       }
 
       setDialogOpen(false);
-      fetchExperiences();
+      fetchData();
     } catch (error: any) {
       console.error("Error saving experience:", error);
       toast({
@@ -262,7 +326,7 @@ export default function ExperiencesPage() {
 
       setDeleteDialogOpen(false);
       setSelectedExperience(null);
-      fetchExperiences();
+      fetchData();
     } catch (error: any) {
       console.error("Error deleting experience:", error);
       toast({
@@ -284,7 +348,7 @@ export default function ExperiencesPage() {
   };
 
   const handleDateSaved = () => {
-    fetchExperiences();
+    fetchData();
     setDateDialogOpen(false);
     setSelectedDate(null);
   };
@@ -303,7 +367,7 @@ export default function ExperiencesPage() {
         description: "Data eliminata",
       });
 
-      fetchExperiences();
+      fetchData();
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -327,11 +391,14 @@ export default function ExperiencesPage() {
   };
 
   const filteredExperiences = experiences.filter((exp) => {
+    const associationName = getAssociationName(exp.association_id, exp.association_name);
+    const cityName = getCityName(exp.city_id, exp.city);
+
     const matchesSearch =
       !searchTerm ||
       exp.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      exp.city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      exp.association_name?.toLowerCase().includes(searchTerm.toLowerCase());
+      cityName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      associationName.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus = statusFilter === "all" || exp.status === statusFilter;
 
@@ -470,32 +537,22 @@ export default function ExperiencesPage() {
                                 )}
                                 <div>
                                   <p className="font-medium">{experience.title}</p>
-                                  {experience.association_name && (
-                                    <p className="text-xs text-muted-foreground">
-                                      {experience.association_name}
-                                    </p>
-                                  )}
+                                  <p className="text-xs text-muted-foreground">
+                                    {getAssociationName(experience.association_id, experience.association_name)}
+                                  </p>
                                 </div>
                               </div>
                             </TableCell>
                             <TableCell>
-                              {experience.city ? (
-                                <div className="flex items-center gap-1">
-                                  <MapPin className="h-3 w-3 text-muted-foreground" />
-                                  {experience.city}
-                                </div>
-                              ) : (
-                                "—"
-                              )}
+                              <div className="flex items-center gap-1">
+                                <MapPin className="h-3 w-3 text-muted-foreground" />
+                                {getCityName(experience.city_id, experience.city)}
+                              </div>
                             </TableCell>
                             <TableCell>
-                              {experience.category ? (
-                                <Badge variant="outline" className="capitalize">
-                                  {experience.category}
-                                </Badge>
-                              ) : (
-                                "—"
-                              )}
+                              <Badge variant="outline" className="capitalize">
+                                {getCategoryName(experience.category_id, experience.category)}
+                              </Badge>
                             </TableCell>
                             <TableCell>{getStatusBadge(experience.status)}</TableCell>
                             <TableCell>
@@ -676,31 +733,38 @@ export default function ExperiencesPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="association_name">Associazione</Label>
-                <Input
-                  id="association_name"
-                  value={formData.association_name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, association_name: e.target.value })
-                  }
-                  placeholder="Nome associazione"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="category">Categoria</Label>
+                <Label htmlFor="association_id">Associazione</Label>
                 <Select
-                  value={formData.category}
+                  value={formData.association_id}
                   onValueChange={(value) =>
-                    setFormData({ ...formData, category: value })
+                    setFormData({ ...formData, association_id: value })
                   }
                 >
                   <SelectTrigger className="bg-background">
                     <SelectValue placeholder="Seleziona..." />
                   </SelectTrigger>
                   <SelectContent className="bg-popover">
-                    {CATEGORIES.map((cat) => (
-                      <SelectItem key={cat} value={cat} className="capitalize">
-                        {cat}
+                    {associations.map((assoc) => (
+                      <SelectItem key={assoc.id} value={assoc.id}>
+                        {assoc.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="category_id">Categoria</Label>
+                <Select
+                  value={formData.category_id}
+                  onValueChange={handleCategoryChange}
+                >
+                  <SelectTrigger className="bg-background">
+                    <SelectValue placeholder="Seleziona..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover">
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id} className="capitalize">
+                        {cat.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -710,15 +774,24 @@ export default function ExperiencesPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="city">Città</Label>
-                <Input
-                  id="city"
-                  value={formData.city}
-                  onChange={(e) =>
-                    setFormData({ ...formData, city: e.target.value })
+                <Label htmlFor="city_id">Città</Label>
+                <Select
+                  value={formData.city_id}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, city_id: value })
                   }
-                  placeholder="Città"
-                />
+                >
+                  <SelectTrigger className="bg-background">
+                    <SelectValue placeholder="Seleziona..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover">
+                    {cities.map((city) => (
+                      <SelectItem key={city.id} value={city.id}>
+                        {city.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="address">Indirizzo</Label>
@@ -768,6 +841,18 @@ export default function ExperiencesPage() {
 
             <div className="space-y-2">
               <Label>SDGs (Obiettivi di Sviluppo Sostenibile)</Label>
+              {suggestedSdgs.length > 0 && (
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 border border-border mb-2">
+                  <Lightbulb className="h-4 w-4 text-primary shrink-0" />
+                  <p className="text-xs text-muted-foreground">
+                    Suggeriti per questa categoria:{" "}
+                    {suggestedSdgs.map((code) => {
+                      const sdg = allSDGs.find((s) => s.code === code);
+                      return sdg ? `${sdg.icon} ${sdg.name}` : code;
+                    }).join(", ")}
+                  </p>
+                </div>
+              )}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-3 border border-border rounded-lg max-h-48 overflow-y-auto">
                 {allSDGs.map((sdg) => (
                   <div key={sdg.code} className="flex items-center space-x-2">
@@ -778,7 +863,9 @@ export default function ExperiencesPage() {
                     />
                     <label
                       htmlFor={sdg.code}
-                      className="text-xs cursor-pointer flex items-center gap-1"
+                      className={`text-xs cursor-pointer flex items-center gap-1 ${
+                        suggestedSdgs.includes(sdg.code) ? "text-primary font-medium" : ""
+                      }`}
                     >
                       <span>{sdg.icon}</span>
                       <span className="truncate">{sdg.name}</span>

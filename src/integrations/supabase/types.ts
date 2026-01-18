@@ -14,6 +14,93 @@ export type Database = {
   }
   public: {
     Tables: {
+      association_cities: {
+        Row: {
+          association_id: string
+          city_id: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          association_id: string
+          city_id: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          association_id?: string
+          city_id?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "association_cities_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "association_cities_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      associations: {
+        Row: {
+          address: string | null
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string
+          description: string | null
+          id: string
+          internal_notes: string | null
+          logo_url: string | null
+          name: string
+          partnership_start_date: string | null
+          status: string
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          internal_notes?: string | null
+          logo_url?: string | null
+          name: string
+          partnership_start_date?: string | null
+          status?: string
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          internal_notes?: string | null
+          logo_url?: string | null
+          name?: string
+          partnership_start_date?: string | null
+          status?: string
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           created_at: string
@@ -52,6 +139,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      categories: {
+        Row: {
+          created_at: string
+          default_sdgs: string[] | null
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          default_sdgs?: string[] | null
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          default_sdgs?: string[] | null
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cities: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          province: string | null
+          region: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          province?: string | null
+          region?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          province?: string | null
+          region?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       companies: {
         Row: {
@@ -151,9 +292,12 @@ export type Database = {
       experiences: {
         Row: {
           address: string | null
+          association_id: string | null
           association_name: string | null
           category: string | null
+          category_id: string | null
           city: string | null
+          city_id: string | null
           created_at: string
           description: string | null
           id: string
@@ -164,9 +308,12 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          association_id?: string | null
           association_name?: string | null
           category?: string | null
+          category_id?: string | null
           city?: string | null
+          city_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -177,9 +324,12 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          association_id?: string | null
           association_name?: string | null
           category?: string | null
+          category_id?: string | null
           city?: string | null
+          city_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -188,7 +338,29 @@ export type Database = {
           status?: string
           title?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "experiences_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "experiences_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "experiences_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
