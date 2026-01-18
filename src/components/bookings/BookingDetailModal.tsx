@@ -31,7 +31,7 @@ const getCategoryTips = (category: string | null): { icon: React.ReactNode; titl
   switch (category?.toLowerCase()) {
     case "ambiente":
       return {
-        icon: <Sun className="h-5 w-5 text-amber-500" />,
+        icon: <Sun className="h-5 w-5 text-primary" />,
         title: "Consigli per attività all'aperto",
         tips: [
           "Indossa abiti comodi che possono sporcarsi",
@@ -43,7 +43,7 @@ const getCategoryTips = (category: string | null): { icon: React.ReactNode; titl
       };
     case "sociale":
       return {
-        icon: <Shirt className="h-5 w-5 text-blue-500" />,
+        icon: <Shirt className="h-5 w-5 text-primary" />,
         title: "Come prepararsi",
         tips: [
           "Abbigliamento casual ma ordinato",
@@ -54,7 +54,7 @@ const getCategoryTips = (category: string | null): { icon: React.ReactNode; titl
       };
     case "educazione":
       return {
-        icon: <Info className="h-5 w-5 text-green-500" />,
+        icon: <Info className="h-5 w-5 text-primary" />,
         title: "Suggerimenti utili",
         tips: [
           "Porta pazienza e un sorriso!",
@@ -65,7 +65,7 @@ const getCategoryTips = (category: string | null): { icon: React.ReactNode; titl
       };
     case "anziani":
       return {
-        icon: <Info className="h-5 w-5 text-purple-500" />,
+        icon: <Info className="h-5 w-5 text-primary" />,
         title: "Per una visita perfetta",
         tips: [
           "Parla lentamente e chiaramente",
@@ -77,7 +77,7 @@ const getCategoryTips = (category: string | null): { icon: React.ReactNode; titl
       };
     case "animali":
       return {
-        icon: <CloudRain className="h-5 w-5 text-orange-500" />,
+        icon: <CloudRain className="h-5 w-5 text-primary" />,
         title: "Preparati al meglio",
         tips: [
           "Vestiti che possono sporcarsi (molto!)",
@@ -238,7 +238,7 @@ export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps
             )}
 
             {/* Tips Section */}
-            <div className="p-4 rounded-xl bg-secondary/50 border border-secondary">
+            <div className="p-4 rounded-xl bg-muted/30 border border-border">
               <div className="flex items-center gap-2 mb-3">
                 {tips.icon}
                 <h3 className="font-semibold">{tips.title}</h3>
