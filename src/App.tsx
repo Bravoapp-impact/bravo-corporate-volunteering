@@ -6,12 +6,18 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ProtectedHRRoute } from "@/components/ProtectedHRRoute";
+import { ProtectedSuperAdminRoute } from "@/components/ProtectedSuperAdminRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Experiences from "./pages/Experiences";
 import MyBookings from "./pages/MyBookings";
 import HRDashboard from "./pages/HRDashboard";
+import SuperAdminDashboard from "./pages/super-admin/SuperAdminDashboard";
+import CompaniesPage from "./pages/super-admin/CompaniesPage";
+import ExperiencesPage from "./pages/super-admin/ExperiencesPage";
+import AssignmentsPage from "./pages/super-admin/AssignmentsPage";
+import UsersPage from "./pages/super-admin/UsersPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -49,6 +55,47 @@ const App = () => (
                 <ProtectedHRRoute>
                   <HRDashboard />
                 </ProtectedHRRoute>
+              }
+            />
+            {/* Super Admin Routes */}
+            <Route
+              path="/super-admin"
+              element={
+                <ProtectedSuperAdminRoute>
+                  <SuperAdminDashboard />
+                </ProtectedSuperAdminRoute>
+              }
+            />
+            <Route
+              path="/super-admin/companies"
+              element={
+                <ProtectedSuperAdminRoute>
+                  <CompaniesPage />
+                </ProtectedSuperAdminRoute>
+              }
+            />
+            <Route
+              path="/super-admin/experiences"
+              element={
+                <ProtectedSuperAdminRoute>
+                  <ExperiencesPage />
+                </ProtectedSuperAdminRoute>
+              }
+            />
+            <Route
+              path="/super-admin/assignments"
+              element={
+                <ProtectedSuperAdminRoute>
+                  <AssignmentsPage />
+                </ProtectedSuperAdminRoute>
+              }
+            />
+            <Route
+              path="/super-admin/users"
+              element={
+                <ProtectedSuperAdminRoute>
+                  <UsersPage />
+                </ProtectedSuperAdminRoute>
               }
             />
             <Route path="*" element={<NotFound />} />

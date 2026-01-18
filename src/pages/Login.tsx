@@ -21,12 +21,32 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      await signIn({ email, password });
+      const result = await signIn({ email, password });
       toast({
         title: "Benvenuto!",
         description: "Accesso effettuato con successo.",
       });
-      navigate("/app/experiences");
+      
+      // Redirect based on role
+      const user = result?.user;
+      if (user) {
+        const { supabase } = await import("@/integrations/supabase/client");
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .single();
+        
+        if (profile?.role === "super_admin") {
+          navigate("/super-admin");
+        } else if (profile?.role === "hr_admin") {
+          navigate("/hr");
+        } else {
+          navigate("/app/experiences");
+        }
+      } else {
+        navigate("/app/experiences");
+      }
     } catch (error: any) {
       toast({
         variant: "destructive",
