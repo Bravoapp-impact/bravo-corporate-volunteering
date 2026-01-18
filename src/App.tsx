@@ -18,6 +18,9 @@ import CompaniesPage from "./pages/super-admin/CompaniesPage";
 import ExperiencesPage from "./pages/super-admin/ExperiencesPage";
 import AssignmentsPage from "./pages/super-admin/AssignmentsPage";
 import UsersPage from "./pages/super-admin/UsersPage";
+import AssociationsPage from "./pages/super-admin/AssociationsPage";
+import CitiesPage from "./pages/super-admin/CitiesPage";
+import CategoriesPage from "./pages/super-admin/CategoriesPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -95,6 +98,30 @@ const App = () => (
               element={
                 <ProtectedSuperAdminRoute>
                   <UsersPage />
+                </ProtectedSuperAdminRoute>
+              }
+            />
+            <Route
+              path="/super-admin/associations"
+              element={
+                <ProtectedSuperAdminRoute>
+                  <AssociationsPage />
+                </ProtectedSuperAdminRoute>
+              }
+            />
+            <Route
+              path="/super-admin/cities"
+              element={
+                <ProtectedSuperAdminRoute>
+                  <CitiesPage />
+                </ProtectedSuperAdminRoute>
+              }
+            />
+            <Route
+              path="/super-admin/categories"
+              element={
+                <ProtectedSuperAdminRoute>
+                  <CategoriesPage />
                 </ProtectedSuperAdminRoute>
               }
             />

@@ -12,6 +12,9 @@ import {
   Menu,
   X,
   ChevronRight,
+  MapPin,
+  Tag,
+  Heart,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -55,6 +58,21 @@ const sidebarItems = [
     label: "Utenti",
     icon: Users,
     href: "/super-admin/users",
+  },
+  {
+    label: "Associazioni",
+    icon: Heart,
+    href: "/super-admin/associations",
+  },
+  {
+    label: "Città",
+    icon: MapPin,
+    href: "/super-admin/cities",
+  },
+  {
+    label: "Categorie",
+    icon: Tag,
+    href: "/super-admin/categories",
   },
 ];
 
