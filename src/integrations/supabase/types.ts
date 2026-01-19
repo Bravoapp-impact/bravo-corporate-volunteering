@@ -421,6 +421,13 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: { user_uuid: string }; Returns: boolean }
+      validate_company_access_code: {
+        Args: { code: string }
+        Returns: {
+          id: string
+          name: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

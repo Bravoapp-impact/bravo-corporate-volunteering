@@ -15,13 +15,12 @@ export interface SignInData {
 
 export async function validateAccessCode(accessCode: string) {
   const { data, error } = await supabase
-    .from("companies")
-    .select("id, name")
-    .eq("access_code", accessCode)
-    .maybeSingle();
+    .rpc('validate_company_access_code', { code: accessCode });
 
   if (error) throw error;
-  return data;
+  
+  // RPC returns an array, get the first result or null
+  return data && data.length > 0 ? data[0] : null;
 }
 
 export async function signUp({ email, password, firstName, lastName, accessCode }: SignUpData) {
