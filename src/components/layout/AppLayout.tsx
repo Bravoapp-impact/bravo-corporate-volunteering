@@ -118,39 +118,6 @@ export function AppLayout({ children }: AppLayoutProps) {
                 <User className="h-4 w-4" />
                 <span className="hidden lg:inline">Profilo</span>
               </Link>
-
-              <div className="w-px h-6 bg-border/50 mx-2" />
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="gap-2">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                      <User className="h-4 w-4 text-primary" />
-                    </div>
-                    <span className="hidden lg:inline text-sm">
-                      {profile?.first_name || "Account"}
-                    </span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 bg-popover">
-                  <div className="px-3 py-2">
-                    <p className="text-sm font-medium">
-                      {profile?.first_name} {profile?.last_name}
-                    </p>
-                    <p className="text-xs text-muted-foreground">{profile?.email}</p>
-                    {profile?.companies && (
-                      <p className="text-xs text-primary mt-1">
-                        {profile.companies.name}
-                      </p>
-                    )}
-                  </div>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut} className="text-destructive cursor-pointer">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Esci
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
             </nav>
           )}
         </div>
