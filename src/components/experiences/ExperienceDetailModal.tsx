@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, MapPin, Calendar, Clock, Users, Building, CheckCircle2, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -44,6 +45,53 @@ export function ExperienceDetailModal({
   const { toast } = useToast();
   const [selectedDateId, setSelectedDateId] = useState<string | null>(null);
   const [isBooking, setIsBooking] = useState(false);
+  const [dates, setDates] = useState<ExperienceDate[]>([]);
+  const [loadingDates, setLoadingDates] = useState(false);
+
+  // Fetch dates separately to ensure RLS is applied correctly
+  useEffect(() => {
+    if (!experience) return;
+
+    const fetchDates = async () => {
+      setLoadingDates(true);
+      setSelectedDateId(null);
+      try {
+        // Query experience_dates directly - RLS will filter by user's company
+        const { data, error } = await supabase
+          .from("experience_dates")
+          .select("id, start_datetime, end_datetime, max_participants")
+          .eq("experience_id", experience.id)
+          .gte("start_datetime", new Date().toISOString())
+          .order("start_datetime", { ascending: true });
+
+        if (error) throw error;
+
+        // Fetch confirmed bookings count for each date
+        const datesWithCount = await Promise.all(
+          (data || []).map(async (date) => {
+            const { count } = await supabase
+              .from("bookings")
+              .select("*", { count: "exact", head: true })
+              .eq("experience_date_id", date.id)
+              .eq("status", "confirmed");
+
+            return {
+              ...date,
+              confirmed_count: count || 0,
+            };
+          })
+        );
+
+        setDates(datesWithCount);
+      } catch (error) {
+        console.error("Error fetching dates:", error);
+      } finally {
+        setLoadingDates(false);
+      }
+    };
+
+    fetchDates();
+  }, [experience]);
 
   if (!experience) return null;
 
@@ -164,11 +212,17 @@ export function ExperienceDetailModal({
             )}
 
             {/* Date Selection */}
-            {experience.experience_dates && experience.experience_dates.length > 0 && (
-              <div className="space-y-4">
-                <h3 className="font-semibold text-lg">Seleziona una data</h3>
+            <div className="space-y-4">
+              <h3 className="font-semibold text-lg">Seleziona una data</h3>
+              {loadingDates ? (
                 <div className="grid gap-3">
-                  {experience.experience_dates.map((date) => {
+                  {[1, 2].map((i) => (
+                    <Skeleton key={i} className="h-20 w-full rounded-xl" />
+                  ))}
+                </div>
+              ) : dates.length > 0 ? (
+                <div className="grid gap-3">
+                  {dates.map((date) => {
                     const availableSpots = date.max_participants - (date.confirmed_count || 0);
                     const isFull = availableSpots <= 0;
                     const isSelected = selectedDateId === date.id;
@@ -221,8 +275,12 @@ export function ExperienceDetailModal({
                     );
                   })}
                 </div>
-              </div>
-            )}
+              ) : (
+                <p className="text-muted-foreground text-center py-4">
+                  Nessuna data disponibile per la tua azienda
+                </p>
+              )}
+            </div>
 
             {/* Book Button */}
             <Button
