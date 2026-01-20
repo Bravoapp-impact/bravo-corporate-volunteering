@@ -303,6 +303,7 @@ export type Database = {
           id: string
           image_url: string | null
           sdgs: string[] | null
+          secondary_tags: string[] | null
           status: string
           title: string
         }
@@ -319,6 +320,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           sdgs?: string[] | null
+          secondary_tags?: string[] | null
           status?: string
           title: string
         }
@@ -335,6 +337,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           sdgs?: string[] | null
+          secondary_tags?: string[] | null
           status?: string
           title?: string
         }

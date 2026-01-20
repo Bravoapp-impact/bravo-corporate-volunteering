@@ -12,6 +12,8 @@ import {
   ChevronDown,
   ChevronUp,
   Lightbulb,
+  Tag,
+  X,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -88,6 +90,7 @@ interface Experience {
   address: string | null;
   status: string;
   sdgs: string[] | null;
+  secondary_tags: string[] | null;
   created_at: string;
   experience_dates?: ExperienceDate[];
   // Legacy fields (kept for display during migration)
@@ -95,6 +98,23 @@ interface Experience {
   city?: string | null;
   category?: string | null;
 }
+
+// Available secondary tags for experiences
+const AVAILABLE_TAGS = [
+  "Outdoor",
+  "Indoor", 
+  "Manuale",
+  "Creativo",
+  "Formativo",
+  "Intergenerazionale",
+  "Animali",
+  "Gruppo",
+  "Accessibile",
+  "Fisica",
+  "Inclusione",
+  "Sostenibilità",
+  "Cultura locale",
+] as const;
 
 interface ExperienceDate {
   id: string;
@@ -137,6 +157,7 @@ export default function ExperiencesPage() {
     address: "",
     status: "draft",
     sdgs: [] as string[],
+    secondary_tags: [] as string[],
   });
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
@@ -216,6 +237,7 @@ export default function ExperiencesPage() {
         address: experience.address || "",
         status: experience.status,
         sdgs: experience.sdgs || [],
+        secondary_tags: experience.secondary_tags || [],
       });
       setSuggestedSdgs([]);
     } else {
@@ -230,6 +252,7 @@ export default function ExperiencesPage() {
         address: "",
         status: "draft",
         sdgs: [],
+        secondary_tags: [],
       });
       setSuggestedSdgs([]);
     }
@@ -270,6 +293,7 @@ export default function ExperiencesPage() {
         address: formData.address || null,
         status: formData.status,
         sdgs: formData.sdgs.length > 0 ? formData.sdgs : null,
+        secondary_tags: formData.secondary_tags.length > 0 ? formData.secondary_tags : null,
       };
 
       if (selectedExperience) {
@@ -345,6 +369,15 @@ export default function ExperiencesPage() {
       sdgs: prev.sdgs.includes(sdgCode)
         ? prev.sdgs.filter((s) => s !== sdgCode)
         : [...prev.sdgs, sdgCode],
+    }));
+  };
+
+  const handleTagToggle = (tag: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      secondary_tags: prev.secondary_tags.includes(tag)
+        ? prev.secondary_tags.filter((t) => t !== tag)
+        : [...prev.secondary_tags, tag],
     }));
   };
 
@@ -838,6 +871,39 @@ export default function ExperiencesPage() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Tag Secondari (opzionali)</Label>
+              <p className="text-xs text-muted-foreground mb-2">
+                Aggiungi tag per migliorare la ricerca delle esperienze
+              </p>
+              <div className="flex flex-wrap gap-2 p-3 border border-border rounded-lg">
+                {AVAILABLE_TAGS.map((tag) => {
+                  const isSelected = formData.secondary_tags.includes(tag);
+                  return (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => handleTagToggle(tag)}
+                      className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                        isSelected
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted hover:bg-muted/80 text-foreground"
+                      }`}
+                    >
+                      {isSelected && <X className="h-3 w-3" />}
+                      {!isSelected && <Tag className="h-3 w-3" />}
+                      {tag}
+                    </button>
+                  );
+                })}
+              </div>
+              {formData.secondary_tags.length > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  {formData.secondary_tags.length} tag selezionati
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
