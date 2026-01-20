@@ -7,6 +7,18 @@ import { ExperienceCard } from "@/components/experiences/ExperienceCard";
 import { ExperienceDetailModal } from "@/components/experiences/ExperienceDetailModal";
 import { supabase } from "@/integrations/supabase/client";
 
+interface ExperienceDate {
+  id: string;
+  start_datetime: string;
+  end_datetime: string;
+  max_participants: number;
+  confirmed_count?: number;
+}
+
+interface ExperienceDateRow extends ExperienceDate {
+  experience_id: string;
+}
+
 interface Experience {
   id: string;
   title: string;
@@ -16,7 +28,7 @@ interface Experience {
   city: string | null;
   address: string | null;
   category: string | null;
-  experience_dates?: any[];
+  experience_dates?: ExperienceDate[];
 }
 
 export default function Experiences() {
@@ -27,16 +39,55 @@ export default function Experiences() {
 
   const fetchExperiences = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("experiences")
-      .select(`*, experience_dates(*)`)
-      .eq("status", "published")
-      .order("created_at", { ascending: false });
 
-    if (!error && data) {
-      setExperiences(data);
+    try {
+      // Fetch experiences first (RLS filters to user's company)
+      const { data: expData, error: expError } = await supabase
+        .from("experiences")
+        .select("*")
+        .eq("status", "published")
+        .order("created_at", { ascending: false });
+
+      if (expError) throw expError;
+
+      const baseExperiences = (expData ?? []) as Experience[];
+
+      if (baseExperiences.length === 0) {
+        setExperiences([]);
+        return;
+      }
+
+      // Fetch dates separately to ensure date-level RLS is applied (company isolation)
+      const experienceIds = baseExperiences.map((e) => e.id);
+      const { data: datesData, error: datesError } = await supabase
+        .from("experience_dates")
+        .select("id, experience_id, start_datetime, end_datetime, max_participants")
+        .in("experience_id", experienceIds)
+        .gte("start_datetime", new Date().toISOString())
+        .order("start_datetime", { ascending: true });
+
+      if (datesError) throw datesError;
+
+      const datesByExperienceId = new Map<string, ExperienceDate[]>();
+      (datesData as ExperienceDateRow[] | null)?.forEach((d) => {
+        const { experience_id, ...date } = d;
+        const list = datesByExperienceId.get(experience_id) ?? [];
+        list.push(date);
+        datesByExperienceId.set(experience_id, list);
+      });
+
+      setExperiences(
+        baseExperiences.map((exp) => ({
+          ...exp,
+          experience_dates: datesByExperienceId.get(exp.id) ?? [],
+        }))
+      );
+    } catch (error) {
+      console.error("Error fetching experiences:", error);
+      setExperiences([]);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
