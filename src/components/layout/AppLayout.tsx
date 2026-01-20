@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { LogOut, Calendar, User, Ticket } from "lucide-react";
+import { LogOut, Search, Calendar, Sprout, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -39,51 +39,38 @@ export function AppLayout({ children }: AppLayoutProps) {
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-md">
         <div className="container flex h-14 md:h-16 items-center justify-between">
-          {/* Left: Bravo! logo */}
-          <Link to="/app/experiences" className="flex items-center gap-2">
-            <motion.span
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="text-xl md:text-2xl font-bold text-primary"
-            >
-              Bravo!
-            </motion.span>
-          </Link>
+          {/* Left: Bravo! logo + Company logo */}
+          <div className="flex items-center gap-3">
+            <Link to="/app/experiences" className="flex items-center gap-2">
+              <motion.span
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="text-xl md:text-2xl font-bold text-primary"
+              >
+                Bravo!
+              </motion.span>
+            </Link>
 
-          {/* Center/Right on mobile: Company logo */}
-          {companyLogo && isMobile && (
-            <motion.div
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.1 }}
-            >
-              <img
-                src={companyLogo}
-                alt={companyName || "Company logo"}
-                className="h-7 w-auto max-w-[100px] object-contain"
-              />
-            </motion.div>
-          )}
+            {companyLogo && (
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 }}
+                className="flex items-center"
+              >
+                <div className="w-px h-6 bg-border/50 mr-3" />
+                <img
+                  src={companyLogo}
+                  alt={companyName || "Company logo"}
+                  className="h-7 md:h-8 w-auto max-w-[100px] md:max-w-[120px] object-contain"
+                />
+              </motion.div>
+            )}
+          </div>
 
-          {/* Desktop navigation */}
+          {/* Desktop/Tablet navigation */}
           {!isMobile && (
-            <nav className="flex items-center gap-2 sm:gap-6">
-              {companyLogo && (
-                <motion.div
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.1 }}
-                  className="flex items-center"
-                >
-                  <div className="w-px h-6 bg-border/50 mr-4" />
-                  <img
-                    src={companyLogo}
-                    alt={companyName || "Company logo"}
-                    className="h-8 w-auto max-w-[120px] object-contain"
-                  />
-                </motion.div>
-              )}
-
+            <nav className="flex items-center gap-1 lg:gap-2">
               <Link
                 to="/app/experiences"
                 className={`text-sm font-medium transition-colors flex items-center gap-2 px-3 py-2 rounded-lg ${
@@ -92,8 +79,8 @@ export function AppLayout({ children }: AppLayoutProps) {
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
               >
-                <Calendar className="h-4 w-4" />
-                <span>Esperienze</span>
+                <Search className="h-4 w-4" />
+                <span className="hidden lg:inline">Esplora</span>
               </Link>
 
               <Link
@@ -104,17 +91,43 @@ export function AppLayout({ children }: AppLayoutProps) {
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
               >
-                <Ticket className="h-4 w-4" />
-                <span>Prenotazioni</span>
+                <Calendar className="h-4 w-4" />
+                <span className="hidden lg:inline">Prenotazioni</span>
               </Link>
+
+              <Link
+                to="/app/impact"
+                className={`text-sm font-medium transition-colors flex items-center gap-2 px-3 py-2 rounded-lg ${
+                  isActive("/app/impact")
+                    ? "text-primary bg-primary/10"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                }`}
+              >
+                <Sprout className="h-4 w-4" />
+                <span className="hidden lg:inline">Impatto</span>
+              </Link>
+
+              <Link
+                to="/app/profile"
+                className={`text-sm font-medium transition-colors flex items-center gap-2 px-3 py-2 rounded-lg ${
+                  isActive("/app/profile")
+                    ? "text-primary bg-primary/10"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                }`}
+              >
+                <User className="h-4 w-4" />
+                <span className="hidden lg:inline">Profilo</span>
+              </Link>
+
+              <div className="w-px h-6 bg-border/50 mx-2" />
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="gap-2">
+                  <Button variant="ghost" size="sm" className="gap-2">
                     <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
                       <User className="h-4 w-4 text-primary" />
                     </div>
-                    <span className="hidden md:inline text-sm">
+                    <span className="hidden lg:inline text-sm">
                       {profile?.first_name || "Account"}
                     </span>
                   </Button>
