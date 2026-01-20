@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import { motion } from "framer-motion";
+import bravoLogo from "@/assets/bravo-logo.png";
 
 interface AuthLayoutProps {
   children: ReactNode;
@@ -34,9 +35,11 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
           >
-            <h1 className="text-4xl lg:text-6xl font-bold mb-6">
-              Bravo!
-            </h1>
+            <img 
+              src="/bravo-logo-white.png" 
+              alt="Bravo!" 
+              className="h-12 lg:h-16 w-auto mb-6" 
+            />
             <p className="text-xl lg:text-2xl font-light opacity-90 max-w-md leading-relaxed">
               Fai del bene, insieme alla tua azienda. Un'esperienza di volontariato alla volta.
             </p>
@@ -75,7 +78,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
         >
           {/* Mobile logo */}
           <div className="md:hidden mb-8">
-            <h1 className="text-3xl font-bold text-primary">Bravo!</h1>
+            <img src={bravoLogo} alt="Bravo!" className="h-8 w-auto" />
           </div>
 
           <div className="mb-8">

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { BottomNavigation } from "./BottomNavigation";
+import bravoLogo from "@/assets/bravo-logo.png";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,14 +42,14 @@ export function AppLayout({ children }: AppLayoutProps) {
         <div className="container flex h-14 md:h-16 items-center justify-between">
           {/* Left: Bravo! logo + Company logo */}
           <div className="flex items-center gap-3">
-            <Link to="/app/experiences" className="flex items-center gap-2">
-              <motion.span
+            <Link to="/app/experiences" className="flex items-center">
+              <motion.img
+                src={bravoLogo}
+                alt="Bravo!"
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="text-xl md:text-2xl font-bold text-primary"
-              >
-                Bravo!
-              </motion.span>
+                className="h-6 md:h-7 w-auto"
+              />
             </Link>
 
             {companyLogo && (
