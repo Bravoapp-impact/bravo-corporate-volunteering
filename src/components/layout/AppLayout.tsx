@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { LogOut, Calendar, User, Ticket, BarChart3 } from "lucide-react";
+import { LogOut, Calendar, User, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -28,9 +28,8 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   const isActive = (path: string) => location.pathname === path;
 
-  const isHRAdmin = profile?.role === "hr_admin";
-
   const companyLogo = profile?.companies?.logo_url;
+  const companyName = profile?.companies?.name;
 
   return (
     <div className="min-h-screen bg-background bg-pattern">
@@ -66,19 +65,6 @@ export function AppLayout({ children }: AppLayoutProps) {
           </div>
 
           <nav className="flex items-center gap-2 sm:gap-6">
-            {isHRAdmin && (
-              <Link
-                to="/hr"
-                className={`text-sm font-medium transition-colors flex items-center gap-2 px-3 py-2 rounded-lg ${
-                  isActive("/hr")
-                    ? "text-primary bg-primary/10"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                }`}
-              >
-                <BarChart3 className="h-4 w-4" />
-                <span className="hidden sm:inline">Dashboard HR</span>
-              </Link>
-            )}
 
             <Link
               to="/app/experiences"
