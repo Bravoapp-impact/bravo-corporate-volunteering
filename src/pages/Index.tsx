@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight, Heart, Users, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import bravoLogo from "@/assets/bravo-logo.png";
 
 export default function Index() {
   return (
@@ -17,6 +18,7 @@ export default function Index() {
             transition={{ duration: 0.8 }}
             className="max-w-3xl"
           >
+            <img src={bravoLogo} alt="Bravo!" className="h-12 md:h-16 w-auto mb-6" />
             <h1 className="text-5xl md:text-7xl font-bold text-foreground mb-6 leading-tight">
               Fai del bene,{" "}
               <span className="text-primary">insieme</span> alla tua azienda

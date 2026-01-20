@@ -23,6 +23,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import bravoLogo from "@/assets/bravo-logo.png";
 
 interface HRLayoutProps {
   children: ReactNode;
@@ -91,8 +92,8 @@ export function HRLayout({ children }: HRLayoutProps) {
       >
         <div className="flex h-16 items-center justify-between border-b border-border/50 px-4">
           <div className="flex items-center gap-3">
-            <Link to="/hr" className="flex items-center gap-2">
-              <span className="text-2xl font-bold text-primary">Bravo!</span>
+            <Link to="/hr" className="flex items-center">
+              <img src={bravoLogo} alt="Bravo!" className="h-7 w-auto" />
             </Link>
             {companyLogo && (
               <>
@@ -203,8 +204,8 @@ export function HRLayout({ children }: HRLayoutProps) {
           >
             <Menu className="h-5 w-5" />
           </Button>
-          <Link to="/hr" className="flex items-center gap-2">
-            <span className="text-xl font-bold text-primary">Bravo!</span>
+          <Link to="/hr" className="flex items-center">
+            <img src={bravoLogo} alt="Bravo!" className="h-6 w-auto" />
           </Link>
           {companyLogo ? (
             <img
