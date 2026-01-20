@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { motion } from "framer-motion";
 import bravoLogo from "@/assets/bravo-logo.png";
+import bravoLogoWhite from "@/assets/bravo-logo-white.png";
 
 interface AuthLayoutProps {
   children: ReactNode;
@@ -36,9 +37,9 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
             transition={{ duration: 0.8, delay: 0.2 }}
           >
             <img 
-              src={bravoLogo}
+              src={bravoLogoWhite}
               alt="Bravo!" 
-              className="h-12 lg:h-16 w-auto mb-6 brightness-0 invert" 
+              className="h-12 lg:h-16 w-auto mb-6" 
             />
             <p className="text-xl lg:text-2xl font-light opacity-90 max-w-md leading-relaxed">
               Fai del bene, insieme alla tua azienda. Un'esperienza di volontariato alla volta.
