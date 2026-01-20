@@ -90,9 +90,21 @@ export function HRLayout({ children }: HRLayoutProps) {
         )}
       >
         <div className="flex h-16 items-center justify-between border-b border-border/50 px-4">
-          <Link to="/hr" className="flex items-center gap-2">
-            <span className="text-2xl font-bold text-primary">Bravo!</span>
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link to="/hr" className="flex items-center gap-2">
+              <span className="text-2xl font-bold text-primary">Bravo!</span>
+            </Link>
+            {companyLogo && (
+              <>
+                <div className="w-px h-6 bg-border/50" />
+                <img
+                  src={companyLogo}
+                  alt={companyName || "Logo aziendale"}
+                  className="h-7 max-w-[80px] object-contain"
+                />
+              </>
+            )}
+          </div>
           <Button
             variant="ghost"
             size="icon"
@@ -103,21 +115,11 @@ export function HRLayout({ children }: HRLayoutProps) {
           </Button>
         </div>
 
-        {/* Company Logo Section */}
+        {/* HR Admin badge */}
         <div className="p-4 border-b border-border/50">
-          {companyLogo ? (
-            <div className="flex items-center justify-center">
-              <img
-                src={companyLogo}
-                alt={companyName || "Logo aziendale"}
-                className="h-10 max-w-[160px] object-contain"
-              />
-            </div>
-          ) : (
-            <Badge className="w-full justify-center bg-primary/10 text-primary font-medium py-1.5">
-              {companyName || "HR Admin"}
-            </Badge>
-          )}
+          <Badge className="w-full justify-center bg-primary/10 text-primary font-medium py-1.5">
+            HR Admin
+          </Badge>
         </div>
 
         <ScrollArea className="h-[calc(100vh-12rem)] px-3 pt-3">
