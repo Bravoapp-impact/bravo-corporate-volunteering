@@ -251,6 +251,7 @@ export type Database = {
       experience_dates: {
         Row: {
           beneficiaries_count: number | null
+          company_id: string | null
           created_at: string
           end_datetime: string
           experience_id: string
@@ -261,6 +262,7 @@ export type Database = {
         }
         Insert: {
           beneficiaries_count?: number | null
+          company_id?: string | null
           created_at?: string
           end_datetime: string
           experience_id: string
@@ -271,6 +273,7 @@ export type Database = {
         }
         Update: {
           beneficiaries_count?: number | null
+          company_id?: string | null
           created_at?: string
           end_datetime?: string
           experience_id?: string
@@ -280,6 +283,13 @@ export type Database = {
           volunteer_hours?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "experience_dates_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "experience_dates_experience_id_fkey"
             columns: ["experience_id"]

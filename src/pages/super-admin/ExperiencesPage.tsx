@@ -116,6 +116,11 @@ const AVAILABLE_TAGS = [
   "Cultura locale",
 ] as const;
 
+interface Company {
+  id: string;
+  name: string;
+}
+
 interface ExperienceDate {
   id: string;
   experience_id: string;
@@ -124,6 +129,7 @@ interface ExperienceDate {
   max_participants: number;
   volunteer_hours: number | null;
   beneficiaries_count: number | null;
+  company_id: string | null;
 }
 
 const STATUS_OPTIONS = [
@@ -136,6 +142,7 @@ export default function ExperiencesPage() {
   const [experiences, setExperiences] = useState<Experience[]>([]);
   const [associations, setAssociations] = useState<Association[]>([]);
   const [cities, setCities] = useState<City[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -169,7 +176,7 @@ export default function ExperiencesPage() {
 
   const fetchData = async () => {
     try {
-      const [experiencesRes, associationsRes, citiesRes, categoriesRes] = await Promise.all([
+      const [experiencesRes, associationsRes, citiesRes, categoriesRes, companiesRes] = await Promise.all([
         supabase
           .from("experiences")
           .select("*, experience_dates(*)")
@@ -177,17 +184,20 @@ export default function ExperiencesPage() {
         supabase.from("associations").select("id, name").order("name"),
         supabase.from("cities").select("id, name").order("name"),
         supabase.from("categories").select("id, name, default_sdgs").order("name"),
+        supabase.from("companies").select("id, name").order("name"),
       ]);
 
       if (experiencesRes.error) throw experiencesRes.error;
       if (associationsRes.error) throw associationsRes.error;
       if (citiesRes.error) throw citiesRes.error;
       if (categoriesRes.error) throw categoriesRes.error;
+      if (companiesRes.error) throw companiesRes.error;
 
       setExperiences(experiencesRes.data || []);
       setAssociations(associationsRes.data || []);
       setCities(citiesRes.data || []);
       setCategories(categoriesRes.data || []);
+      setCompanies(companiesRes.data || []);
     } catch (error) {
       devLog.error("Error fetching data:", error);
       toast({
@@ -647,20 +657,36 @@ export default function ExperiencesPage() {
                                             new Date(a.start_datetime).getTime() -
                                             new Date(b.start_datetime).getTime()
                                         )
-                                        .map((date) => (
+                                        .map((date) => {
+                                          const companyName = date.company_id 
+                                            ? companies.find(c => c.id === date.company_id)?.name 
+                                            : null;
+                                          return (
                                           <div
                                             key={date.id}
                                             className="flex items-center justify-between p-3 rounded-lg bg-background border border-border"
                                           >
                                             <div className="flex items-center gap-4">
                                               <div>
-                                                <p className="font-medium text-sm">
-                                                  {format(
-                                                    new Date(date.start_datetime),
-                                                    "EEEE d MMMM yyyy",
-                                                    { locale: it }
+                                                <div className="flex items-center gap-2">
+                                                  <p className="font-medium text-sm">
+                                                    {format(
+                                                      new Date(date.start_datetime),
+                                                      "EEEE d MMMM yyyy",
+                                                      { locale: it }
+                                                    )}
+                                                  </p>
+                                                  {companyName && (
+                                                    <Badge variant="outline" className="text-xs">
+                                                      {companyName}
+                                                    </Badge>
                                                   )}
-                                                </p>
+                                                  {!companyName && (
+                                                    <Badge variant="destructive" className="text-xs">
+                                                      Nessuna azienda
+                                                    </Badge>
+                                                  )}
+                                                </div>
                                                 <p className="text-xs text-muted-foreground">
                                                   {format(
                                                     new Date(date.start_datetime),
@@ -709,7 +735,7 @@ export default function ExperiencesPage() {
                                               </Button>
                                             </div>
                                           </div>
-                                        ))}
+                                        );})}
                                     </div>
                                   ) : (
                                     <p className="text-sm text-muted-foreground py-4 text-center">
@@ -982,6 +1008,7 @@ export default function ExperiencesPage() {
         experienceId={selectedExperience?.id || ""}
         experienceDate={selectedDate}
         onSaved={handleDateSaved}
+        companies={companies}
       />
     </SuperAdminLayout>
   );
