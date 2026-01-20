@@ -36,6 +36,7 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { devLog } from "@/lib/logger";
+import { LogoUpload } from "@/components/super-admin/LogoUpload";
 
 interface Company {
   id: string;
@@ -440,14 +441,13 @@ export default function CompaniesPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="logo_url">URL Logo (opzionale)</Label>
-              <Input
-                id="logo_url"
-                value={formData.logo_url}
-                onChange={(e) =>
-                  setFormData({ ...formData, logo_url: e.target.value })
+              <Label>Logo (opzionale)</Label>
+              <LogoUpload
+                currentLogoUrl={formData.logo_url || null}
+                onLogoChange={(url) =>
+                  setFormData({ ...formData, logo_url: url || "" })
                 }
-                placeholder="https://..."
+                companyId={selectedCompany?.id}
               />
             </div>
           </div>

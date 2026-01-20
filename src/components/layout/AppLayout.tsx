@@ -30,20 +30,40 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   const isHRAdmin = profile?.role === "hr_admin";
 
+  const companyLogo = profile?.companies?.logo_url;
+
   return (
     <div className="min-h-screen bg-background bg-pattern">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-md">
         <div className="container flex h-16 items-center justify-between">
-          <Link to="/app/experiences" className="flex items-center gap-2">
-            <motion.span
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="text-2xl font-bold text-primary"
-            >
-              Bravo!
-            </motion.span>
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link to="/app/experiences" className="flex items-center gap-2">
+              <motion.span
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="text-2xl font-bold text-primary"
+              >
+                Bravo!
+              </motion.span>
+            </Link>
+            
+            {companyLogo && (
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 }}
+                className="flex items-center"
+              >
+                <div className="w-px h-6 bg-border/50 mr-4" />
+                <img
+                  src={companyLogo}
+                  alt={profile?.companies?.name || "Company logo"}
+                  className="h-8 w-auto max-w-[120px] object-contain"
+                />
+              </motion.div>
+            )}
+          </div>
 
           <nav className="flex items-center gap-2 sm:gap-6">
             {isHRAdmin && (
