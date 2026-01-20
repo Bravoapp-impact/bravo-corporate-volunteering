@@ -13,6 +13,8 @@ import Register from "./pages/Register";
 import Experiences from "./pages/Experiences";
 import MyBookings from "./pages/MyBookings";
 import HRDashboard from "./pages/HRDashboard";
+import HRExperiencesPage from "./pages/hr/HRExperiencesPage";
+import HREmployeesPage from "./pages/hr/HREmployeesPage";
 import SuperAdminDashboard from "./pages/super-admin/SuperAdminDashboard";
 import CompaniesPage from "./pages/super-admin/CompaniesPage";
 import ExperiencesPage from "./pages/super-admin/ExperiencesPage";
@@ -57,6 +59,22 @@ const App = () => (
               element={
                 <ProtectedHRRoute>
                   <HRDashboard />
+                </ProtectedHRRoute>
+              }
+            />
+            <Route
+              path="/hr/experiences"
+              element={
+                <ProtectedHRRoute>
+                  <HRExperiencesPage />
+                </ProtectedHRRoute>
+              }
+            />
+            <Route
+              path="/hr/employees"
+              element={
+                <ProtectedHRRoute>
+                  <HREmployeesPage />
                 </ProtectedHRRoute>
               }
             />

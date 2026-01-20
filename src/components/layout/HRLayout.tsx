@@ -1,7 +1,16 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { motion } from "framer-motion";
-import { LogOut, User, LayoutDashboard, Calendar, Ticket, BarChart3 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  LogOut,
+  User,
+  BarChart3,
+  Calendar,
+  Users,
+  Menu,
+  X,
+  ChevronRight,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -12,100 +21,205 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface HRLayoutProps {
   children: ReactNode;
 }
 
+const sidebarItems = [
+  {
+    label: "Dashboard",
+    icon: BarChart3,
+    href: "/hr",
+  },
+  {
+    label: "Esperienze",
+    icon: Calendar,
+    href: "/hr/experiences",
+  },
+  {
+    label: "Dipendenti",
+    icon: Users,
+    href: "/hr/employees",
+  },
+];
+
 export function HRLayout({ children }: HRLayoutProps) {
   const { profile, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
     navigate("/login");
   };
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => {
+    if (path === "/hr") {
+      return location.pathname === path;
+    }
+    return location.pathname.startsWith(path);
+  };
+
+  const companyLogo = profile?.companies?.logo_url;
+  const companyName = profile?.companies?.name;
 
   return (
     <div className="min-h-screen bg-background bg-pattern">
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-md">
-        <div className="container flex h-16 items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link to="/hr" className="flex items-center gap-2">
-              <motion.span
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="text-2xl font-bold text-primary"
-              >
-                Bravo!
-              </motion.span>
-            </Link>
-            <Badge variant="secondary" className="bg-bravo-purple/10 text-bravo-purple font-medium">
-              HR Admin
+      {/* Mobile Sidebar Overlay */}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Sidebar */}
+      <aside
+        className={cn(
+          "fixed left-0 top-0 z-50 h-full w-64 border-r border-border/50 bg-card/95 backdrop-blur-md transition-transform duration-300 lg:translate-x-0",
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
+        <div className="flex h-16 items-center justify-between border-b border-border/50 px-4">
+          <Link to="/hr" className="flex items-center gap-2">
+            <span className="text-2xl font-bold text-primary">Bravo!</span>
+          </Link>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          >
+            <X className="h-5 w-5" />
+          </Button>
+        </div>
+
+        {/* Company Logo Section */}
+        <div className="p-4 border-b border-border/50">
+          {companyLogo ? (
+            <div className="flex items-center justify-center">
+              <img
+                src={companyLogo}
+                alt={companyName || "Logo aziendale"}
+                className="h-10 max-w-[160px] object-contain"
+              />
+            </div>
+          ) : (
+            <Badge className="w-full justify-center bg-primary/10 text-primary font-medium py-1.5">
+              {companyName || "HR Admin"}
             </Badge>
-          </div>
+          )}
+        </div>
 
-          <nav className="flex items-center gap-2 sm:gap-4">
-            <Link
-              to="/hr"
-              className={`text-sm font-medium transition-colors flex items-center gap-2 px-3 py-2 rounded-lg ${
-                isActive("/hr")
-                  ? "text-primary bg-primary/10"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
-              }`}
-            >
-              <BarChart3 className="h-4 w-4" />
-              <span className="hidden sm:inline">Dashboard</span>
-            </Link>
+        <ScrollArea className="h-[calc(100vh-12rem)] px-3 pt-3">
+          <nav className="space-y-1">
+            {sidebarItems.map((item) => {
+              const Icon = item.icon;
+              const active = isActive(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  to={item.href}
+                  onClick={() => setSidebarOpen(false)}
+                  className={cn(
+                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
+                    active
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                >
+                  <Icon className="h-5 w-5" />
+                  {item.label}
+                  {active && <ChevronRight className="ml-auto h-4 w-4" />}
+                </Link>
+              );
+            })}
+          </nav>
+        </ScrollArea>
 
-            <Link
-              to="/app/experiences"
-              className="text-sm font-medium transition-colors flex items-center gap-2 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
-            >
-              <Calendar className="h-4 w-4" />
-              <span className="hidden sm:inline">Esperienze</span>
-            </Link>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="gap-2">
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <User className="h-4 w-4 text-primary" />
-                  </div>
-                  <span className="hidden md:inline text-sm">
-                    {profile?.first_name || "Account"}
-                  </span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 bg-popover">
-                <div className="px-3 py-2">
-                  <p className="text-sm font-medium">
+        {/* User section at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 border-t border-border/50 p-4">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className="w-full justify-start gap-3 h-auto py-2"
+              >
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <User className="h-4 w-4 text-primary" />
+                </div>
+                <div className="text-left overflow-hidden">
+                  <p className="text-sm font-medium truncate">
                     {profile?.first_name} {profile?.last_name}
                   </p>
-                  <p className="text-xs text-muted-foreground">{profile?.email}</p>
-                  {profile?.companies && (
-                    <p className="text-xs text-primary mt-1">
-                      {profile.companies.name}
-                    </p>
-                  )}
+                  <p className="text-xs text-muted-foreground truncate">
+                    {profile?.email}
+                  </p>
                 </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut} className="text-destructive cursor-pointer">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Esci
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </nav>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56 bg-popover">
+              <div className="px-3 py-2">
+                <p className="text-sm font-medium">
+                  {profile?.first_name} {profile?.last_name}
+                </p>
+                <p className="text-xs text-muted-foreground">{profile?.email}</p>
+                {companyName && (
+                  <p className="text-xs text-primary mt-1">{companyName}</p>
+                )}
+              </div>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={handleSignOut}
+                className="text-destructive cursor-pointer"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Esci
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
-      </header>
+      </aside>
 
-      {/* Main content */}
-      <main className="container py-8">{children}</main>
+      {/* Main content area */}
+      <div className="lg:pl-64">
+        {/* Mobile header */}
+        <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border/50 bg-background/80 backdrop-blur-md px-4 lg:hidden">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setSidebarOpen(true)}
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+          <Link to="/hr" className="flex items-center gap-2">
+            <span className="text-xl font-bold text-primary">Bravo!</span>
+          </Link>
+          {companyLogo ? (
+            <img
+              src={companyLogo}
+              alt={companyName || "Logo aziendale"}
+              className="h-6 max-w-[80px] object-contain"
+            />
+          ) : (
+            <Badge className="bg-primary/10 text-primary font-medium text-xs">
+              HR Admin
+            </Badge>
+          )}
+        </header>
+
+        {/* Page content */}
+        <main className="p-4 sm:p-6 lg:p-8">{children}</main>
+      </div>
     </div>
   );
 }
