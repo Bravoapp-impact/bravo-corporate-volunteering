@@ -9,6 +9,7 @@ import {
   Download,
   ArrowUpDown,
   AlertCircle,
+  ChevronRight,
 } from "lucide-react";
 import { HRLayout } from "@/components/layout/HRLayout";
 import { useAuth } from "@/hooks/useAuth";
@@ -443,12 +444,13 @@ export default function HREmployeesPage() {
                       <ArrowUpDown className="h-3 w-3" />
                     </Button>
                   </TableHead>
+                  <TableHead className="w-10"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredEmployees.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                    <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
                       Nessun dipendente corrisponde ai filtri
                     </TableCell>
                   </TableRow>
@@ -497,6 +499,9 @@ export default function HREmployeesPage() {
                         {employee.last_participation
                           ? format(new Date(employee.last_participation), "d MMM yyyy", { locale: it })
                           : "—"}
+                      </TableCell>
+                      <TableCell className="w-10 text-muted-foreground">
+                        <ChevronRight className="h-4 w-4" />
                       </TableCell>
                     </motion.tr>
                   ))
