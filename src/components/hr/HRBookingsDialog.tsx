@@ -73,10 +73,29 @@ export function HRBookingsDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
-        <DialogHeader className="flex flex-row items-start justify-between gap-4">
-          <DialogTitle className="text-lg font-semibold pr-6">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-semibold pr-8">
             Prenotazioni per {experienceTitle}
           </DialogTitle>
+        </DialogHeader>
+
+        {/* Date info + Export */}
+        <div className="flex flex-wrap items-center justify-between gap-3 py-3 border-b border-border/50">
+          <div className="flex flex-wrap gap-2">
+            <Badge variant="outline" className="gap-1.5">
+              <Calendar className="h-3 w-3" />
+              {format(new Date(dateInfo.start_datetime), "d MMM yyyy", { locale: it })}
+            </Badge>
+            <Badge variant="outline" className="gap-1.5">
+              <Clock className="h-3 w-3" />
+              {format(new Date(dateInfo.start_datetime), "HH:mm")} -{" "}
+              {format(new Date(dateInfo.end_datetime), "HH:mm")}
+            </Badge>
+            <Badge variant="secondary" className="gap-1.5">
+              <Users className="h-3 w-3" />
+              {confirmedCount}/{dateInfo.max_participants} posti
+            </Badge>
+          </div>
           {bookings.length > 0 && (
             <Button
               variant="outline"
@@ -88,23 +107,6 @@ export function HRBookingsDialog({
               <span className="hidden sm:inline">Esporta CSV</span>
             </Button>
           )}
-        </DialogHeader>
-
-        {/* Date info */}
-        <div className="flex flex-wrap gap-3 py-3 border-b border-border/50">
-          <Badge variant="outline" className="gap-1.5">
-            <Calendar className="h-3 w-3" />
-            {format(new Date(dateInfo.start_datetime), "d MMM yyyy", { locale: it })}
-          </Badge>
-          <Badge variant="outline" className="gap-1.5">
-            <Clock className="h-3 w-3" />
-            {format(new Date(dateInfo.start_datetime), "HH:mm")} -{" "}
-            {format(new Date(dateInfo.end_datetime), "HH:mm")}
-          </Badge>
-          <Badge variant="secondary" className="gap-1.5">
-            <Users className="h-3 w-3" />
-            {confirmedCount}/{dateInfo.max_participants} posti
-          </Badge>
         </div>
 
         {/* Bookings list */}
