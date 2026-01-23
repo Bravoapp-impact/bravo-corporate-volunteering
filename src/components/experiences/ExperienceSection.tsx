@@ -17,6 +17,7 @@ interface Experience {
   description: string | null;
   image_url: string | null;
   association_name: string | null;
+  association_logo_url?: string | null;
   city: string | null;
   address: string | null;
   category: string | null;

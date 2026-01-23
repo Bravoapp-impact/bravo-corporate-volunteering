@@ -26,6 +26,7 @@ interface Experience {
   description: string | null;
   image_url: string | null;
   association_name: string | null;
+  association_logo_url?: string | null;
   city: string | null;
   address: string | null;
   category: string | null;
@@ -42,16 +43,33 @@ export default function Experiences() {
     setLoading(true);
 
     try {
-      // Fetch experiences first (RLS filters to user's company)
+      // Fetch experiences with association details (RLS filters to user's company)
       const { data: expData, error: expError } = await supabase
         .from("experiences")
-        .select("*")
+        .select(`
+          *,
+          associations:association_id (
+            name,
+            logo_url
+          )
+        `)
         .eq("status", "published")
         .order("created_at", { ascending: false });
 
       if (expError) throw expError;
 
-      const baseExperiences = (expData ?? []) as Experience[];
+      // Transform to include association logo
+      const baseExperiences = (expData ?? []).map((exp: any) => ({
+        id: exp.id,
+        title: exp.title,
+        description: exp.description,
+        image_url: exp.image_url,
+        association_name: exp.associations?.name ?? exp.association_name,
+        association_logo_url: exp.associations?.logo_url ?? null,
+        city: exp.city,
+        address: exp.address,
+        category: exp.category,
+      })) as Experience[];
 
       if (baseExperiences.length === 0) {
         setExperiences([]);
