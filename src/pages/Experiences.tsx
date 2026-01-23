@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Search, Filter } from "lucide-react";
+import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { ExperienceCard } from "@/components/experiences/ExperienceCard";
+import { ExperienceSection } from "@/components/experiences/ExperienceSection";
 import { ExperienceDetailModal } from "@/components/experiences/ExperienceDetailModal";
+import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ExperienceDate {
@@ -107,12 +108,12 @@ export default function Experiences() {
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-8"
+        className="mb-6"
       >
-        <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
+        <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1">
           Esperienze di volontariato
         </h1>
-        <p className="text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           Scopri le opportunità disponibili per la tua azienda
         </p>
       </motion.div>
@@ -135,31 +136,35 @@ export default function Experiences() {
         </div>
       </motion.div>
 
-      {/* Grid */}
+      {/* Content */}
       {loading ? (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-96 rounded-2xl bg-muted animate-pulse" />
-          ))}
+        <div className="space-y-6">
+          <Skeleton className="h-6 w-48" />
+          <div className="flex gap-4 overflow-hidden">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="flex-shrink-0 w-[160px] sm:w-[180px] md:w-[200px] space-y-3">
+                <Skeleton className="aspect-square rounded-xl" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-3 w-2/3" />
+              </div>
+            ))}
+          </div>
         </div>
       ) : filteredExperiences.length === 0 ? (
         <div className="text-center py-16">
-          <p className="text-6xl mb-4">🔍</p>
-          <h3 className="text-xl font-semibold mb-2">Nessuna esperienza trovata</h3>
-          <p className="text-muted-foreground">
+          <p className="text-5xl mb-4">🔍</p>
+          <h3 className="text-lg font-semibold mb-2">Nessuna esperienza trovata</h3>
+          <p className="text-sm text-muted-foreground">
             Prova a modificare i criteri di ricerca
           </p>
         </div>
       ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredExperiences.map((experience, index) => (
-            <ExperienceCard
-              key={experience.id}
-              experience={experience}
-              index={index}
-              onSelect={setSelectedExperience}
-            />
-          ))}
+        <div className="space-y-8">
+          <ExperienceSection
+            title="Esperienze disponibili"
+            experiences={filteredExperiences}
+            onSelectExperience={setSelectedExperience}
+          />
         </div>
       )}
 
