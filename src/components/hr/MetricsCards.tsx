@@ -92,8 +92,8 @@ export function MetricsCards({
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         {topRow.map((metric, index) => renderCard(metric, index))}
       </div>
-      {/* Bottom row: 2 cards centered */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 max-w-2xl mx-auto">
+      {/* Bottom row: 2 cards full-width */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         {bottomRow.map((metric, index) => renderCard(metric, index, 3))}
       </div>
     </div>
