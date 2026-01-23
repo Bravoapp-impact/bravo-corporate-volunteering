@@ -125,7 +125,7 @@ export function LogoUpload({ currentLogoUrl, onLogoChange, entityId, bucket = "c
         </div>
       ) : (
         <div
-          className={`${sizeClasses} rounded-lg border-2 border-dashed border-border bg-muted/30 flex items-center justify-center cursor-pointer hover:border-primary/50 hover:bg-muted/50 transition-colors`}
+          className={`${sizeClasses} rounded-lg border-2 border-dashed border-border bg-muted/30 flex items-center justify-center cursor-pointer hover:border-border hover:bg-muted/50 transition-colors`}
           onClick={() => fileInputRef.current?.click()}
         >
           {uploading ? (

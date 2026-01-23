@@ -142,7 +142,7 @@ export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-primary/30 to-accent/30 flex items-center justify-center">
+              <div className="w-full h-full bg-muted flex items-center justify-center">
                 <span className="text-6xl">🤝</span>
               </div>
             )}

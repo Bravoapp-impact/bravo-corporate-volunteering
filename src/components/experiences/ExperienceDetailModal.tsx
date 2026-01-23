@@ -157,7 +157,7 @@ export function ExperienceDetailModal({
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-primary/30 to-accent/30 flex items-center justify-center">
+              <div className="w-full h-full bg-muted flex items-center justify-center">
                 <span className="text-7xl">🤝</span>
               </div>
             )}
@@ -236,7 +236,7 @@ export function ExperienceDetailModal({
                           p-4 rounded-xl border-2 text-left transition-all
                           ${isSelected
                             ? "border-primary bg-primary/5"
-                            : "border-border hover:border-primary/50"
+                            : "border-border hover:border-border hover:bg-muted/30"
                           }
                           ${isFull ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
                         `}

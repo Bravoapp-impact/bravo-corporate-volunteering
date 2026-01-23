@@ -245,7 +245,7 @@ export function HRExperienceCard({ experience }: HRExperienceCardProps) {
                               key={date.id}
                               onClick={() => setSelectedDate(date)}
                               className={cn(
-                                "text-left p-3 rounded-lg border border-border/50 hover:border-primary/50 hover:bg-muted/30 transition-all group",
+                                "text-left p-3 rounded-lg border border-border/50 hover:bg-muted/30 hover:shadow-sm transition-all group",
                                 isPast && "opacity-60"
                               )}
                             >

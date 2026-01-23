@@ -14,7 +14,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
     <div className="min-h-screen flex flex-col md:flex-row">
       {/* Left side - Decorative */}
       <div className="hidden md:flex md:w-1/2 lg:w-3/5 gradient-hero relative overflow-hidden">
-        <div className="absolute inset-0 bg-pattern opacity-30" />
+        <div className="absolute inset-0 opacity-30" />
         
         {/* Decorative shapes */}
         <motion.div

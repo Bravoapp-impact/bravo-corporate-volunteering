@@ -6,7 +6,7 @@ import bravoLogo from "@/assets/bravo-logo.png";
 
 export default function Index() {
   return (
-    <div className="min-h-screen bg-background bg-pattern overflow-hidden">
+    <div className="min-h-screen bg-background overflow-hidden">
       {/* Hero */}
       <section className="relative min-h-screen flex items-center">
         <div className="absolute inset-0 gradient-hero opacity-5" />
