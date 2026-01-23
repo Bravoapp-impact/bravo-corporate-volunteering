@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import { HRLayout } from "@/components/layout/HRLayout";
 import { MetricsCards } from "@/components/hr/MetricsCards";
 import { SDGImpactGrid } from "@/components/hr/SDGImpactGrid";
-import { BookingsTable } from "@/components/hr/BookingsTable";
 import { UpcomingEvents } from "@/components/hr/UpcomingEvents";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,23 +11,11 @@ import { devLog } from "@/lib/logger";
 
 interface DashboardData {
   employeesCount: number;
+  participationRate: number;
   totalVolunteerHours: number;
   totalBeneficiaries: number;
   totalParticipations: number;
   sdgImpacts: { code: string; hours: number }[];
-  bookings: {
-    id: string;
-    status: string;
-    created_at: string;
-    volunteer_hours: number;
-    user: {
-      first_name: string | null;
-      last_name: string | null;
-      email: string;
-    };
-    experience_title: string;
-    start_datetime: string;
-  }[];
   upcomingEvents: {
     id: string;
     experience_title: string;
@@ -44,11 +31,11 @@ export default function HRDashboard() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<DashboardData>({
     employeesCount: 0,
+    participationRate: 0,
     totalVolunteerHours: 0,
     totalBeneficiaries: 0,
     totalParticipations: 0,
     sdgImpacts: [],
-    bookings: [],
     upcomingEvents: [],
   });
 
@@ -64,11 +51,14 @@ export default function HRDashboard() {
     try {
       setLoading(true);
 
-      // Fetch employees count
-      const { count: employeesCount } = await supabase
+      // Fetch employees count and profiles
+      const { data: companyProfiles } = await supabase
         .from("profiles")
-        .select("*", { count: "exact", head: true })
+        .select("id, first_name, last_name, email")
         .eq("company_id", profile.company_id);
+
+      const employeesCount = companyProfiles?.length || 0;
+      const companyUserIds = new Set(companyProfiles?.map((p) => p.id) || []);
 
       // Fetch all bookings with related data for this company
       const { data: bookingsData } = await supabase
@@ -96,12 +86,6 @@ export default function HRDashboard() {
         .order("created_at", { ascending: false });
 
       // Filter bookings by company employees
-      const { data: companyProfiles } = await supabase
-        .from("profiles")
-        .select("id, first_name, last_name, email")
-        .eq("company_id", profile.company_id);
-
-      const companyUserIds = new Set(companyProfiles?.map((p) => p.id) || []);
       const companyBookings = bookingsData?.filter((b) => companyUserIds.has(b.user_id)) || [];
 
       // Calculate completed bookings (end_datetime < now AND status = confirmed)
@@ -112,6 +96,12 @@ export default function HRDashboard() {
           b.experience_dates &&
           new Date(b.experience_dates.end_datetime) < now
       );
+
+      // Calculate unique employees who participated
+      const participatingEmployees = new Set(completedBookings.map((b) => b.user_id));
+      const participationRate = employeesCount > 0 
+        ? Math.round((participatingEmployees.size / employeesCount) * 100) 
+        : 0;
 
       // Calculate metrics
       let totalVolunteerHours = 0;
@@ -135,25 +125,6 @@ export default function HRDashboard() {
       const sdgImpacts = Object.entries(sdgHoursMap)
         .map(([code, hours]) => ({ code, hours }))
         .sort((a, b) => b.hours - a.hours);
-
-      // Format bookings for table
-      const profileMap = new Map(companyProfiles?.map((p) => [p.id, p]) || []);
-      const formattedBookings = companyBookings.map((b) => {
-        const userProfile = profileMap.get(b.user_id);
-        return {
-          id: b.id,
-          status: b.status,
-          created_at: b.created_at,
-          volunteer_hours: Number(b.experience_dates?.volunteer_hours) || 0,
-          user: {
-            first_name: userProfile?.first_name || null,
-            last_name: userProfile?.last_name || null,
-            email: userProfile?.email || "",
-          },
-          experience_title: b.experience_dates?.experiences?.title || "",
-          start_datetime: b.experience_dates?.start_datetime || "",
-        };
-      });
 
       // Fetch upcoming events with company participants count
       const { data: upcomingDates } = await supabase
@@ -193,18 +164,18 @@ export default function HRDashboard() {
         })
       );
 
-      // Filter to only show events with at least one company participant
-      const eventsWithParticipants = upcomingEvents.filter(
-        (e) => e.company_participants > 0
-      );
+      // Filter to only show events with at least one company participant, limit to 4
+      const eventsWithParticipants = upcomingEvents
+        .filter((e) => e.company_participants > 0)
+        .slice(0, 4);
 
       setData({
-        employeesCount: employeesCount || 0,
+        employeesCount,
+        participationRate,
         totalVolunteerHours,
         totalBeneficiaries,
         totalParticipations: completedBookings.length,
         sdgImpacts,
-        bookings: formattedBookings,
         upcomingEvents: eventsWithParticipants,
       });
     } catch (error) {
@@ -229,33 +200,31 @@ export default function HRDashboard() {
 
   return (
     <HRLayout>
-      <div className="space-y-8">
+      <div className="space-y-6 sm:space-y-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <h1 className="text-3xl font-bold text-foreground">Dashboard HR</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Dashboard</h1>
+          <p className="text-muted-foreground mt-1 text-sm sm:text-base">
             Panoramica dell'impatto sociale della tua azienda
           </p>
         </motion.div>
 
-        {/* Metrics Cards */}
+        {/* Metrics Cards - 5 cards */}
         <MetricsCards
           employeesCount={data.employeesCount}
+          participationRate={data.participationRate}
           totalVolunteerHours={data.totalVolunteerHours}
           totalBeneficiaries={data.totalBeneficiaries}
           totalParticipations={data.totalParticipations}
         />
 
-        {/* SDG Impact Grid */}
-        <SDGImpactGrid sdgImpacts={data.sdgImpacts} />
-
-        {/* Two column layout for table and events */}
+        {/* Two column layout: SDG Impact + Upcoming Events */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           <div className="xl:col-span-2">
-            <BookingsTable bookings={data.bookings} />
+            <SDGImpactGrid sdgImpacts={data.sdgImpacts} />
           </div>
           <div>
             <UpcomingEvents events={data.upcomingEvents} />
