@@ -240,7 +240,7 @@ serve(async (req: Request): Promise<Response> => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            from: "Bravo! <noreply@bravo.app>",
+            from: "Bravo! <noreply@notifications.bravoapp.it>",
             to: [profile.email],
             subject: subject,
             html: emailHtml,
