@@ -326,8 +326,8 @@ export default function CompaniesPage() {
                                   className="w-10 h-10 rounded-lg object-cover"
                                 />
                               ) : (
-                                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                                  <Building2 className="h-5 w-5 text-primary" />
+                                <div className="w-10 h-10 rounded-lg bg-bravo-purple/10 flex items-center justify-center">
+                                  <Building2 className="h-5 w-5 text-bravo-purple" />
                                 </div>
                               )}
                               <span className="font-medium">{company.name}</span>

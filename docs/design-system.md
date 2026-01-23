@@ -89,6 +89,60 @@ Le icone nelle card metriche usano colori **tematici** per identificare visivame
 
 ---
 
+## 🏷️ Colori per Categorie Esperienze
+
+Le categorie di esperienze usano colori tematici per identificarle visivamente nelle card e nei filtri.
+
+| Categoria | Colore | Classe Testo | Classe Background |
+|-----------|--------|--------------|-------------------|
+| Ambiente / Natura | Verde | `text-emerald-600` | `bg-emerald-500/10` |
+| Sociale / Comunità | Rosa | `text-bravo-pink` | `bg-bravo-pink/10` |
+| Educazione / Formazione | Blu | `text-blue-600` | `bg-blue-500/10` |
+| Animali | Arancione | `text-bravo-orange` | `bg-bravo-orange/10` |
+| Cultura / Arte | Viola | `text-bravo-purple` | `bg-bravo-purple/10` |
+| Salute / Benessere | Rosso tenue | `text-rose-600` | `bg-rose-500/10` |
+| Sport / Attività fisiche | Ciano | `text-cyan-600` | `bg-cyan-500/10` |
+| Gastronomia | Giallo | `text-bravo-yellow` | `bg-bravo-yellow/10` |
+| Orti e apicoltura | Verde lime | `text-lime-600` | `bg-lime-500/10` |
+| Inclusione | Magenta | `text-bravo-magenta` | `bg-bravo-magenta/10` |
+| Default | Grigio neutro | `text-muted-foreground` | `bg-muted` |
+
+### Pattern per Badge Categoria
+
+```tsx
+// ✅ Corretto - colori tematici per categoria
+<Badge className="bg-emerald-500/10 text-emerald-600 border-0">
+  Ambiente
+</Badge>
+
+// Oppure con sfondo più neutro
+<Badge variant="secondary" className="text-emerald-600">
+  Ambiente
+</Badge>
+```
+
+### Mapping Categorie (esempio)
+
+```tsx
+const CATEGORY_COLORS: Record<string, { text: string; bg: string }> = {
+  ambiente: { text: "text-emerald-600", bg: "bg-emerald-500/10" },
+  sociale: { text: "text-bravo-pink", bg: "bg-bravo-pink/10" },
+  educazione: { text: "text-blue-600", bg: "bg-blue-500/10" },
+  animali: { text: "text-bravo-orange", bg: "bg-bravo-orange/10" },
+  cultura: { text: "text-bravo-purple", bg: "bg-bravo-purple/10" },
+  salute: { text: "text-rose-600", bg: "bg-rose-500/10" },
+  sport: { text: "text-cyan-600", bg: "bg-cyan-500/10" },
+  gastronomia: { text: "text-bravo-yellow", bg: "bg-bravo-yellow/10" },
+  orti: { text: "text-lime-600", bg: "bg-lime-500/10" },
+  inclusione: { text: "text-bravo-magenta", bg: "bg-bravo-magenta/10" },
+};
+
+// Utilizzo
+const colors = CATEGORY_COLORS[categoryKey] ?? { text: "text-muted-foreground", bg: "bg-muted" };
+```
+
+---
+
 ## ✏️ Tipografia
 
 ### Font Family
