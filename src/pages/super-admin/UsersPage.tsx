@@ -346,8 +346,8 @@ export default function UsersPage() {
                         >
                           <TableCell>
                             <div className="flex items-center gap-3">
-                              <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
-                                <User className="h-4 w-4 text-primary" />
+                              <div className="w-9 h-9 rounded-full bg-bravo-purple/10 flex items-center justify-center">
+                                <User className="h-4 w-4 text-bravo-purple" />
                               </div>
                               <span className="font-medium">
                                 {user.first_name || user.last_name

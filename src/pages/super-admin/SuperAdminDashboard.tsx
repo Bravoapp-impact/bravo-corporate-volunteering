@@ -138,8 +138,8 @@ export default function SuperAdminDashboard() {
       label: "Beneficiari",
       value: stats?.totalBeneficiaries || 0,
       icon: Heart,
-      color: "text-secondary",
-      bgColor: "bg-secondary/10",
+      color: "text-bravo-pink",
+      bgColor: "bg-bravo-pink/10",
     },
   ];
 
