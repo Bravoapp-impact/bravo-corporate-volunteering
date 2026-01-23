@@ -42,7 +42,7 @@ export function ExperienceCard({ experience, index, onSelect }: ExperienceCardPr
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
-      className="group relative bg-card rounded-2xl overflow-hidden border border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-xl hover:shadow-primary/5"
+      className="group relative bg-card rounded-2xl overflow-hidden border border-border transition-all duration-300 hover:shadow-md"
     >
       {/* Image */}
       <div className="relative h-48 overflow-hidden">
@@ -53,7 +53,7 @@ export function ExperienceCard({ experience, index, onSelect }: ExperienceCardPr
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+          <div className="w-full h-full bg-muted flex items-center justify-center">
             <span className="text-5xl">🤝</span>
           </div>
         )}
@@ -79,7 +79,7 @@ export function ExperienceCard({ experience, index, onSelect }: ExperienceCardPr
         )}
 
         {/* Title */}
-        <h3 className="text-xl font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors">
+        <h3 className="text-xl font-semibold text-foreground line-clamp-2">
           {experience.title}
         </h3>
 

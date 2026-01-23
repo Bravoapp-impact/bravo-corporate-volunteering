@@ -69,7 +69,7 @@ export function HRLayout({ children }: HRLayoutProps) {
   const companyName = profile?.companies?.name;
 
   return (
-    <div className="min-h-screen bg-background bg-pattern">
+    <div className="min-h-screen bg-background">
       {/* Mobile Sidebar Overlay */}
       <AnimatePresence>
         {sidebarOpen && (

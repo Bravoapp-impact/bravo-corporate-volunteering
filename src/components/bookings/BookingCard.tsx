@@ -81,7 +81,7 @@ export function BookingCard({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: index * 0.1 }}
-      className="group bg-card rounded-2xl overflow-hidden border border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-lg cursor-pointer"
+      className="group bg-card rounded-2xl overflow-hidden border border-border transition-all duration-300 hover:shadow-md cursor-pointer"
       onClick={() => onView(booking)}
     >
       {/* Image header */}
@@ -93,7 +93,7 @@ export function BookingCard({
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+          <div className="w-full h-full bg-muted flex items-center justify-center">
             <span className="text-4xl">🤝</span>
           </div>
         )}
@@ -132,7 +132,7 @@ export function BookingCard({
         </div>
 
         {/* Title */}
-        <h3 className="font-semibold text-lg text-foreground line-clamp-1 group-hover:text-primary transition-colors">
+        <h3 className="font-semibold text-lg text-foreground line-clamp-1">
           {experience.title}
         </h3>
 

@@ -95,7 +95,7 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-background bg-pattern">
+    <div className="min-h-screen bg-background">
       {/* Mobile Sidebar Overlay */}
       <AnimatePresence>
         {sidebarOpen && (

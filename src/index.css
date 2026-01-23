@@ -8,8 +8,8 @@
 
 @layer base {
   :root {
-    /* Background neutri */
-    --background: 0 0% 100%;
+    /* Background neutri - #FAFAFA */
+    --background: 0 0% 98%;
     --foreground: 0 0% 10%;
     
     --card: 0 0% 100%;
@@ -22,13 +22,13 @@
     --primary: 274 100% 50%;
     --primary-foreground: 0 0% 100%;
     
-    /* Secondary - Magenta */
-    --secondary: 290 67% 46%;
-    --secondary-foreground: 0 0% 100%;
+    /* Secondary - Neutro per badge e elementi discreti */
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 20%;
     
-    /* Accent - Rosa */
-    --accent: 330 56% 53%;
-    --accent-foreground: 0 0% 100%;
+    /* Accent - Neutro per hover states */
+    --accent: 0 0% 96%;
+    --accent-foreground: 0 0% 10%;
     
     --muted: 0 0% 96%;
     --muted-foreground: 0 0% 45%;
@@ -44,7 +44,7 @@
     
     --border: 0 0% 90%;
     --input: 0 0% 90%;
-    --ring: 274 100% 50%;
+    --ring: 0 0% 20%;
     
     --radius: 0.75rem;
     
@@ -157,13 +157,7 @@
     text-wrap: balance;
   }
 
-  /* Animated background pattern */
-  .bg-pattern {
-    background-image: 
-      radial-gradient(circle at 25% 25%, hsl(var(--bravo-purple) / 0.03) 0%, transparent 50%),
-      radial-gradient(circle at 75% 75%, hsl(var(--bravo-magenta) / 0.05) 0%, transparent 50%),
-      radial-gradient(circle at 50% 50%, hsl(var(--bravo-orange) / 0.02) 0%, transparent 70%);
-  }
+  /* Background pattern - rimosso per stile Airbnb pulito */
 
   /* Floating animation */
   @keyframes float {

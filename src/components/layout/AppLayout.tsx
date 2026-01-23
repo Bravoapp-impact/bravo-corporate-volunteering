@@ -36,7 +36,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const companyName = profile?.companies?.name;
 
   return (
-    <div className="min-h-screen bg-background bg-pattern">
+    <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-md">
         <div className="container flex h-14 md:h-16 items-center justify-between">

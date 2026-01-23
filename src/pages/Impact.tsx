@@ -140,10 +140,10 @@ export default function Impact() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.1 }}
           >
-            <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+            <Card className="border">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-full bg-primary/20">
+                  <div className="p-2 rounded-full bg-muted">
                     <Award className="h-5 w-5 text-primary" />
                   </div>
                   <div>
@@ -162,11 +162,11 @@ export default function Impact() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.15 }}
           >
-            <Card className="bg-gradient-to-br from-secondary/10 to-secondary/5 border-secondary/20">
+            <Card className="border">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-full bg-secondary/20">
-                    <Clock className="h-5 w-5 text-secondary" />
+                  <div className="p-2 rounded-full bg-muted">
+                    <Clock className="h-5 w-5 text-foreground" />
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-foreground">
@@ -184,11 +184,11 @@ export default function Impact() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2 }}
           >
-            <Card className="bg-gradient-to-br from-accent/10 to-accent/5 border-accent/20">
+            <Card className="border">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-full bg-accent/20">
-                    <Users className="h-5 w-5 text-accent" />
+                  <div className="p-2 rounded-full bg-muted">
+                    <Users className="h-5 w-5 text-foreground" />
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-foreground">
@@ -206,11 +206,11 @@ export default function Impact() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.25 }}
           >
-            <Card className="bg-gradient-to-br from-orange/10 to-orange/5 border-orange/20">
+            <Card className="border">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-full bg-orange/20">
-                    <TrendingUp className="h-5 w-5 text-orange" />
+                  <div className="p-2 rounded-full bg-muted">
+                    <TrendingUp className="h-5 w-5 text-foreground" />
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-foreground">
