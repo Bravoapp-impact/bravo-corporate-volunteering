@@ -89,8 +89,8 @@ export function HRExperienceMetrics({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         {topRow.map((metric, index) => renderCardWithIcon(metric, index))}
       </div>
-      {/* Bottom row: 2 cards centered */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 max-w-2xl mx-auto">
+      {/* Bottom row: 2 cards full-width */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         {bottomRow.map((metric, index) => renderCardWithIcon(metric, index, 2))}
       </div>
     </div>

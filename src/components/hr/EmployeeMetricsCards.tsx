@@ -50,133 +50,117 @@ export function EmployeeMetricsCards({
     currentMonthCount >= previousMonthCount ? "up" : "down";
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
       {/* Ore Medie per Dipendente */}
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
+        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
       >
         <Card className="border-border/50 bg-card/80 backdrop-blur-sm h-full">
-          <CardContent className="p-4">
-            <div className="flex items-start justify-between">
-              <div className="flex-1 min-w-0">
-                <p className="text-sm text-muted-foreground truncate">
-                  Ore medie / dipendente
-                </p>
-                <p className="text-2xl font-bold text-foreground mt-1">
-                  {avgHoursPerEmployee}
-                  <span className="text-sm font-normal text-muted-foreground ml-1">
-                    h
-                  </span>
-                </p>
+          <CardContent className="p-4 sm:p-5">
+            <div className="flex items-start gap-3 sm:gap-4">
+              <div className="p-2.5 sm:p-3 rounded-xl bg-accent/10 shrink-0">
+                <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-accent" />
               </div>
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                <Clock className="h-5 w-5 text-primary" />
+              <div className="min-w-0 flex-1">
+                <p className="text-xl sm:text-2xl font-bold text-foreground">
+                  {avgHoursPerEmployee}h
+                </p>
+                <p className="text-xs sm:text-sm text-muted-foreground leading-tight">
+                  Ore Medie per Dipendente
+                </p>
               </div>
             </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              Calcolato su {activeEmployees.length} dipendenti attivi
-            </p>
           </CardContent>
         </Card>
       </motion.div>
 
       {/* Percentuale Dipendenti Attivi */}
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
+        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15 }}
+        transition={{ delay: 0.2 }}
       >
         <Card className="border-border/50 bg-card/80 backdrop-blur-sm h-full">
-          <CardContent className="p-4">
-            <div className="flex items-start justify-between">
-              <div className="flex-1 min-w-0">
-                <p className="text-sm text-muted-foreground truncate">
-                  Dipendenti attivi
-                </p>
-                <p className="text-2xl font-bold text-foreground mt-1">
-                  {activePercentage}
-                  <span className="text-sm font-normal text-muted-foreground ml-1">
-                    %
-                  </span>
-                </p>
+          <CardContent className="p-4 sm:p-5">
+            <div className="flex items-start gap-3 sm:gap-4">
+              <div className="p-2.5 sm:p-3 rounded-xl bg-secondary/10 shrink-0">
+                <UserCheck className="h-5 w-5 sm:h-6 sm:w-6 text-secondary" />
               </div>
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                <UserCheck className="h-5 w-5 text-primary" />
+              <div className="min-w-0 flex-1">
+                <p className="text-xl sm:text-2xl font-bold text-foreground">
+                  {activePercentage}%
+                </p>
+                <p className="text-xs sm:text-sm text-muted-foreground leading-tight">
+                  Dipendenti Attivi
+                </p>
               </div>
             </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              {activeEmployees.length} su {employees.length} dipendenti
-            </p>
           </CardContent>
         </Card>
       </motion.div>
 
       {/* Trend Mensile */}
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
+        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
+        transition={{ delay: 0.3 }}
       >
         <Card className="border-border/50 bg-card/80 backdrop-blur-sm h-full">
-          <CardContent className="p-4">
-            <div className="flex items-start justify-between mb-2">
-              <div className="flex-1 min-w-0">
-                <p className="text-sm text-muted-foreground truncate">
-                  Trend partecipazioni
-                </p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Ultimi 3 mesi
-                </p>
-              </div>
+          <CardContent className="p-4 sm:p-5">
+            <div className="flex items-start gap-3 sm:gap-4">
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
+                className={`p-2.5 sm:p-3 rounded-xl shrink-0 ${
                   trendDirection === "up"
                     ? "bg-primary/10"
                     : "bg-destructive/10"
                 }`}
               >
                 <TrendingUp
-                  className={`h-5 w-5 ${
+                  className={`h-5 w-5 sm:h-6 sm:w-6 ${
                     trendDirection === "up"
                       ? "text-primary"
                       : "text-destructive rotate-180"
                   }`}
                 />
               </div>
-            </div>
-
-            {monthlyTrend.length > 0 ? (
-              <div className="h-16 mt-2">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={monthlyTrend} barCategoryGap="20%">
-                    <XAxis
-                      dataKey="month"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
-                    />
-                    <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                      {monthlyTrend.map((_, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={
-                            index === monthlyTrend.length - 1
-                              ? "hsl(var(--primary))"
-                              : "hsl(var(--muted))"
-                          }
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm text-muted-foreground leading-tight mb-2">
+                  Trend Partecipazioni
+                </p>
+                {monthlyTrend.length > 0 ? (
+                  <div className="h-16">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={monthlyTrend} barCategoryGap="20%">
+                        <XAxis
+                          dataKey="month"
+                          axisLine={false}
+                          tickLine={false}
+                          tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
                         />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+                        <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                          {monthlyTrend.map((_, index) => (
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={
+                                index === monthlyTrend.length - 1
+                                  ? "hsl(var(--primary))"
+                                  : "hsl(var(--primary) / 0.3)"
+                              }
+                            />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Nessun dato disponibile
+                  </p>
+                )}
               </div>
-            ) : (
-              <p className="text-xs text-muted-foreground mt-4 text-center">
-                Nessun dato disponibile
-              </p>
-            )}
+            </div>
           </CardContent>
         </Card>
       </motion.div>
