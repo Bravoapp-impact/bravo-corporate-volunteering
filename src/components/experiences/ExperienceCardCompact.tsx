@@ -50,8 +50,8 @@ export function ExperienceCardCompact({ experience, index, onSelect }: Experienc
       onClick={() => onSelect(experience)}
       className="group flex-shrink-0 w-[165px] sm:w-[185px] md:w-[210px] text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-2xl"
     >
-      {/* 4:5 Portrait Image */}
-      <div className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-muted">
+      {/* Square Image */}
+      <div className="relative aspect-square rounded-2xl overflow-hidden bg-muted">
         {experience.image_url ? (
           <img
             src={experience.image_url}
