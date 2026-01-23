@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, MapPin, Calendar, Clock, Users, Building, CheckCircle2, Loader2 } from "lucide-react";
-import { format } from "date-fns";
+import { X, MapPin, Users, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { format, isSameMonth, addMonths, subMonths, startOfMonth } from "date-fns";
 import { it } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { SDG_DATA } from "@/lib/sdg-data";
 
 interface ExperienceDate {
   id: string;
@@ -24,9 +25,11 @@ interface Experience {
   description: string | null;
   image_url: string | null;
   association_name: string | null;
+  association_logo_url?: string | null;
   city: string | null;
   address: string | null;
   category: string | null;
+  sdgs?: string[];
   experience_dates?: ExperienceDate[];
 }
 
@@ -36,6 +39,8 @@ interface ExperienceDetailModalProps {
   onBookingComplete: () => void;
 }
 
+type ModalStep = "detail" | "dates";
+
 export function ExperienceDetailModal({
   experience,
   onClose,
@@ -43,20 +48,21 @@ export function ExperienceDetailModal({
 }: ExperienceDetailModalProps) {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [step, setStep] = useState<ModalStep>("detail");
   const [selectedDateId, setSelectedDateId] = useState<string | null>(null);
   const [isBooking, setIsBooking] = useState(false);
   const [dates, setDates] = useState<ExperienceDate[]>([]);
   const [loadingDates, setLoadingDates] = useState(false);
+  const [currentMonth, setCurrentMonth] = useState<Date>(startOfMonth(new Date()));
 
-  // Fetch dates separately to ensure RLS is applied correctly
+  // Fetch dates when entering the dates step
   useEffect(() => {
-    if (!experience) return;
+    if (!experience || step !== "dates") return;
 
     const fetchDates = async () => {
       setLoadingDates(true);
       setSelectedDateId(null);
       try {
-        // Query experience_dates directly - RLS will filter by user's company
         const { data, error } = await supabase
           .from("experience_dates")
           .select("id, start_datetime, end_datetime, max_participants")
@@ -66,7 +72,6 @@ export function ExperienceDetailModal({
 
         if (error) throw error;
 
-        // Fetch confirmed bookings count for each date
         const datesWithCount = await Promise.all(
           (data || []).map(async (date) => {
             const { count } = await supabase
@@ -83,6 +88,11 @@ export function ExperienceDetailModal({
         );
 
         setDates(datesWithCount);
+        
+        // Set current month to first available date
+        if (datesWithCount.length > 0) {
+          setCurrentMonth(startOfMonth(new Date(datesWithCount[0].start_datetime)));
+        }
       } catch (error) {
         console.error("Error fetching dates:", error);
       } finally {
@@ -91,7 +101,37 @@ export function ExperienceDetailModal({
     };
 
     fetchDates();
-  }, [experience]);
+  }, [experience, step]);
+
+  // Group dates by day within current month
+  const datesByDay = useMemo(() => {
+    const grouped = new Map<string, ExperienceDate[]>();
+    
+    dates
+      .filter((date) => isSameMonth(new Date(date.start_datetime), currentMonth))
+      .forEach((date) => {
+        const dayKey = format(new Date(date.start_datetime), "yyyy-MM-dd");
+        const existing = grouped.get(dayKey) || [];
+        grouped.set(dayKey, [...existing, date]);
+      });
+
+    return grouped;
+  }, [dates, currentMonth]);
+
+  // Available months (those with dates)
+  const availableMonths = useMemo(() => {
+    const months = new Set<string>();
+    dates.forEach((date) => {
+      months.add(format(new Date(date.start_datetime), "yyyy-MM"));
+    });
+    return months;
+  }, [dates]);
+
+  const canGoBack = availableMonths.size > 0 && 
+    Array.from(availableMonths).some((m) => m < format(currentMonth, "yyyy-MM"));
+  
+  const canGoForward = availableMonths.size > 0 && 
+    Array.from(availableMonths).some((m) => m > format(currentMonth, "yyyy-MM"));
 
   if (!experience) return null;
 
@@ -113,16 +153,10 @@ export function ExperienceDetailModal({
         throw error;
       }
 
-      // Trigger confirmation email (fire and forget)
+      // Trigger confirmation email
       if (bookingData) {
         supabase.functions.invoke("send-booking-confirmation", {
           body: { booking_id: bookingData.id },
-        }).then(({ error: emailError }) => {
-          if (emailError) {
-            console.error("Error sending confirmation email:", emailError);
-          } else {
-            console.log("Confirmation email triggered");
-          }
         });
       }
 
@@ -144,170 +178,283 @@ export function ExperienceDetailModal({
     }
   };
 
+  const handleShowDates = () => {
+    setStep("dates");
+  };
+
+  const handleBackToDetail = () => {
+    setStep("detail");
+    setSelectedDateId(null);
+  };
+
   return (
     <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4"
+        className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center"
         onClick={onClose}
       >
         <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          transition={{ duration: 0.3 }}
-          className="bg-card w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl border border-border"
+          initial={{ opacity: 0, y: "100%" }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: "100%" }}
+          transition={{ type: "spring", damping: 25, stiffness: 300 }}
+          className="bg-background w-full sm:max-w-lg max-h-[95vh] sm:max-h-[90vh] overflow-hidden rounded-t-3xl sm:rounded-3xl"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Header Image */}
-          <div className="relative h-56 md:h-72">
-            {experience.image_url ? (
-              <img
-                src={experience.image_url}
-                alt={experience.title}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-muted flex items-center justify-center">
-                <span className="text-7xl">🤝</span>
+          {step === "detail" ? (
+            /* DETAIL VIEW */
+            <div className="flex flex-col max-h-[95vh] sm:max-h-[90vh]">
+              {/* Close button */}
+              <div className="absolute top-4 right-4 z-10">
+                <button
+                  onClick={onClose}
+                  className="w-8 h-8 rounded-full bg-background/90 backdrop-blur-sm flex items-center justify-center hover:bg-background transition-colors shadow-sm"
+                >
+                  <X className="h-4 w-4" />
+                </button>
               </div>
-            )}
 
-            <button
-              onClick={onClose}
-              className="absolute top-4 right-4 w-10 h-10 rounded-full bg-background/90 backdrop-blur-sm flex items-center justify-center hover:bg-background transition-colors"
-            >
-              <X className="h-5 w-5" />
-            </button>
+              {/* Scrollable content */}
+              <div className="flex-1 overflow-y-auto">
+                {/* Square Image */}
+                <div className="relative aspect-square w-full">
+                  {experience.image_url ? (
+                    <img
+                      src={experience.image_url}
+                      alt={experience.title}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-muted flex items-center justify-center">
+                      <span className="text-7xl">🤝</span>
+                    </div>
+                  )}
+                </div>
 
-            {experience.category && (
-              <Badge className="absolute bottom-4 left-4 bg-background/90 backdrop-blur-sm text-foreground">
-                {experience.category}
-              </Badge>
-            )}
-          </div>
+                {/* Content */}
+                <div className="p-5 space-y-4">
+                  {/* Category badge */}
+                  {experience.category && (
+                    <Badge variant="secondary" className="rounded-full">
+                      {experience.category}
+                    </Badge>
+                  )}
 
-          {/* Content */}
-          <div className="p-6 md:p-8 space-y-6">
-            {/* Association */}
-            {experience.association_name && (
-              <div className="flex items-center gap-2 text-primary">
-                <Building className="h-4 w-4" />
-                <span className="font-medium">{experience.association_name}</span>
-              </div>
-            )}
+                  {/* Title */}
+                  <h2 className="text-xl font-bold text-foreground leading-tight">
+                    {experience.title}
+                  </h2>
 
-            {/* Title */}
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground">
-              {experience.title}
-            </h2>
+                  {/* Description */}
+                  {experience.description && (
+                    <p className="text-[15px] text-muted-foreground font-light leading-relaxed">
+                      {experience.description}
+                    </p>
+                  )}
 
-            {/* Description */}
-            {experience.description && (
-              <p className="text-muted-foreground leading-relaxed">
-                {experience.description}
-              </p>
-            )}
+                  {/* Association */}
+                  {experience.association_name && (
+                    <div className="flex items-center gap-2 pt-2">
+                      {experience.association_logo_url ? (
+                        <img
+                          src={experience.association_logo_url}
+                          alt=""
+                          className="w-8 h-8 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                          <span className="text-sm">🏢</span>
+                        </div>
+                      )}
+                      <div>
+                        <p className="text-sm font-medium text-foreground">
+                          {experience.association_name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">Associazione partner</p>
+                      </div>
+                    </div>
+                  )}
 
-            {/* Location */}
-            {(experience.city || experience.address) && (
-              <div className="flex items-start gap-3 p-4 rounded-xl bg-muted/50">
-                <MapPin className="h-5 w-5 text-primary mt-0.5" />
-                <div>
-                  {experience.city && <p className="font-medium">{experience.city}</p>}
-                  {experience.address && (
-                    <p className="text-sm text-muted-foreground">{experience.address}</p>
+                  {/* Address */}
+                  {(experience.city || experience.address) && (
+                    <div className="flex items-start gap-2 pt-2">
+                      <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                      <p className="text-sm text-muted-foreground">
+                        {experience.address && `${experience.address}, `}
+                        {experience.city}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* SDGs */}
+                  {experience.sdgs && experience.sdgs.length > 0 && (
+                    <div className="pt-3 space-y-2">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                        Obiettivi di sostenibilità
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {experience.sdgs.map((sdgCode) => {
+                          const sdg = SDG_DATA[sdgCode];
+                          if (!sdg) return null;
+                          return (
+                            <div
+                              key={sdgCode}
+                              className="flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium"
+                              style={{ 
+                                backgroundColor: `${sdg.color}15`,
+                                color: sdg.color 
+                              }}
+                            >
+                              <span>{sdg.icon}</span>
+                              <span>{sdg.name}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
                   )}
                 </div>
               </div>
-            )}
 
-            {/* Date Selection */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-lg">Seleziona una data</h3>
-              {loadingDates ? (
-                <div className="grid gap-3">
-                  {[1, 2].map((i) => (
-                    <Skeleton key={i} className="h-20 w-full rounded-xl" />
-                  ))}
-                </div>
-              ) : dates.length > 0 ? (
-                <div className="grid gap-3">
-                  {dates.map((date) => {
-                    const availableSpots = date.max_participants - (date.confirmed_count || 0);
-                    const isFull = availableSpots <= 0;
-                    const isSelected = selectedDateId === date.id;
-
-                    return (
-                      <button
-                        key={date.id}
-                        disabled={isFull}
-                        onClick={() => setSelectedDateId(date.id)}
-                        className={`
-                          p-4 rounded-xl border-2 text-left transition-all
-                          ${isSelected
-                            ? "border-primary bg-primary/5"
-                            : "border-border hover:border-border hover:bg-muted/30"
-                          }
-                          ${isFull ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
-                        `}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <Calendar className="h-4 w-4 text-primary" />
-                              <span className="font-medium">
-                                {format(new Date(date.start_datetime), "EEEE d MMMM yyyy", {
-                                  locale: it,
-                                })}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <Clock className="h-4 w-4" />
-                              <span>
-                                {format(new Date(date.start_datetime), "HH:mm")} -{" "}
-                                {format(new Date(date.end_datetime), "HH:mm")}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-1 text-sm">
-                              <Users className="h-4 w-4" />
-                              <span className={isFull ? "text-destructive" : ""}>
-                                {isFull ? "Completo" : `${availableSpots} posti`}
-                              </span>
-                            </div>
-                            {isSelected && (
-                              <CheckCircle2 className="h-5 w-5 text-primary" />
-                            )}
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : (
-                <p className="text-muted-foreground text-center py-4">
-                  Nessuna data disponibile per la tua azienda
-                </p>
-              )}
+              {/* Fixed footer with CTA */}
+              <div className="flex-shrink-0 p-5 border-t border-border bg-background">
+                <Button 
+                  onClick={handleShowDates}
+                  className="w-full h-12 text-base font-medium rounded-xl"
+                >
+                  Vedi date disponibili
+                </Button>
+              </div>
             </div>
+          ) : (
+            /* DATE SELECTION VIEW */
+            <div className="flex flex-col max-h-[95vh] sm:max-h-[90vh]">
+              {/* Header */}
+              <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-border">
+                <button
+                  onClick={handleBackToDetail}
+                  className="w-8 h-8 rounded-full hover:bg-muted flex items-center justify-center transition-colors"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+                <h3 className="text-lg font-semibold">Seleziona una data</h3>
+                <button
+                  onClick={onClose}
+                  className="w-8 h-8 rounded-full hover:bg-muted flex items-center justify-center transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
 
-            {/* Book Button */}
-            <Button
-              onClick={handleBook}
-              disabled={!selectedDateId || isBooking}
-              className="w-full h-12 text-base font-medium"
-            >
-              {isBooking ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                "Conferma prenotazione"
-              )}
-            </Button>
-          </div>
+              {/* Month navigation */}
+              <div className="flex-shrink-0 flex items-center justify-between px-5 py-4 border-b border-border">
+                <button
+                  onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+                  disabled={!canGoBack}
+                  className="w-8 h-8 rounded-full hover:bg-muted flex items-center justify-center transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+                <span className="text-base font-semibold capitalize">
+                  {format(currentMonth, "MMMM yyyy", { locale: it })}
+                </span>
+                <button
+                  onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+                  disabled={!canGoForward}
+                  className="w-8 h-8 rounded-full hover:bg-muted flex items-center justify-center transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Scrollable date slots */}
+              <div className="flex-1 overflow-y-auto p-5 space-y-6">
+                {loadingDates ? (
+                  <div className="space-y-4">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="space-y-2">
+                        <Skeleton className="h-5 w-32" />
+                        <Skeleton className="h-16 w-full rounded-xl" />
+                      </div>
+                    ))}
+                  </div>
+                ) : datesByDay.size > 0 ? (
+                  Array.from(datesByDay.entries()).map(([dayKey, dayDates]) => (
+                    <div key={dayKey} className="space-y-3">
+                      {/* Day header */}
+                      <h4 className="text-base font-semibold text-foreground">
+                        {format(new Date(dayKey), "EEEE, d MMMM", { locale: it })}
+                      </h4>
+
+                      {/* Time slots for this day */}
+                      <div className="space-y-2">
+                        {dayDates.map((date) => {
+                          const availableSpots = date.max_participants - (date.confirmed_count || 0);
+                          const isFull = availableSpots <= 0;
+                          const isSelected = selectedDateId === date.id;
+
+                          return (
+                            <button
+                              key={date.id}
+                              disabled={isFull}
+                              onClick={() => setSelectedDateId(date.id)}
+                              className={`
+                                w-full p-4 rounded-2xl border text-left transition-all
+                                ${isSelected
+                                  ? "border-primary bg-primary/5 ring-1 ring-primary"
+                                  : "border-border hover:bg-muted/30"
+                                }
+                                ${isFull ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
+                              `}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <p className="text-base font-medium text-foreground">
+                                    {format(new Date(date.start_datetime), "HH:mm")}–
+                                    {format(new Date(date.end_datetime), "HH:mm")}
+                                  </p>
+                                </div>
+                                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                                  <Users className="h-4 w-4" />
+                                  <span className={isFull ? "text-destructive font-medium" : ""}>
+                                    {isFull ? "Completo" : `${availableSpots} posti`}
+                                  </span>
+                                </div>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">
+                      Nessuna data disponibile in questo mese
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Fixed footer with confirm button */}
+              <div className="flex-shrink-0 p-5 border-t border-border bg-background">
+                <Button
+                  onClick={handleBook}
+                  disabled={!selectedDateId || isBooking}
+                  className="w-full h-12 text-base font-medium rounded-xl"
+                >
+                  {isBooking ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    "Conferma prenotazione"
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
         </motion.div>
       </motion.div>
     </AnimatePresence>

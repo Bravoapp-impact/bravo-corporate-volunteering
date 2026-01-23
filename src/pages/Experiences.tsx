@@ -30,6 +30,7 @@ interface Experience {
   city: string | null;
   address: string | null;
   category: string | null;
+  sdgs?: string[];
   experience_dates?: ExperienceDate[];
 }
 
@@ -58,7 +59,7 @@ export default function Experiences() {
 
       if (expError) throw expError;
 
-      // Transform to include association logo
+      // Transform to include association logo and SDGs
       const baseExperiences = (expData ?? []).map((exp: any) => ({
         id: exp.id,
         title: exp.title,
@@ -69,6 +70,7 @@ export default function Experiences() {
         city: exp.city,
         address: exp.address,
         category: exp.category,
+        sdgs: exp.sdgs ?? [],
       })) as Experience[];
 
       if (baseExperiences.length === 0) {
