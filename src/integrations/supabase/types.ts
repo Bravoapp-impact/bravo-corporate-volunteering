@@ -582,6 +582,8 @@ export type Database = {
         Args: { exp_date_id: string }
         Returns: number
       }
+      get_my_role: { Args: never; Returns: string }
+      get_role_from_jwt: { Args: never; Returns: string }
       get_user_association_id: { Args: { user_uuid: string }; Returns: string }
       get_user_company_id: { Args: { user_uuid: string }; Returns: string }
       get_user_role: { Args: { user_uuid: string }; Returns: string }
