@@ -28,6 +28,7 @@ import AssociationsPage from "./pages/super-admin/AssociationsPage";
 import CitiesPage from "./pages/super-admin/CitiesPage";
 import CategoriesPage from "./pages/super-admin/CategoriesPage";
 import EmailTemplatesPage from "./pages/super-admin/EmailTemplatesPage";
+import AccessCodesPage from "./pages/super-admin/AccessCodesPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -171,6 +172,14 @@ const App = () => (
               element={
                 <ProtectedSuperAdminRoute>
                   <EmailTemplatesPage />
+                </ProtectedSuperAdminRoute>
+              }
+            />
+            <Route
+              path="/super-admin/access-codes"
+              element={
+                <ProtectedSuperAdminRoute>
+                  <AccessCodesPage />
                 </ProtectedSuperAdminRoute>
               }
             />

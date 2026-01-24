@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Plus, Search, Edit, Trash2, Building2, Copy, Check } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Building2, Key, ExternalLink } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -38,24 +40,12 @@ import { it } from "date-fns/locale";
 import { devLog } from "@/lib/logger";
 import { LogoUpload } from "@/components/super-admin/LogoUpload";
 
-interface AccessCode {
-  id: string;
-  code: string;
-  entity_type: string;
-  entity_id: string;
-  assigned_role: string;
-  is_active: boolean;
-  max_uses: number | null;
-  expires_at: string | null;
-  use_count: number;
-}
-
 interface Company {
   id: string;
   name: string;
   logo_url: string | null;
   created_at: string;
-  access_code?: AccessCode | null;
+  access_codes_count: number;
   _count?: {
     users: number;
   };
@@ -70,11 +60,9 @@ export default function CompaniesPage() {
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [formData, setFormData] = useState({
     name: "",
-    access_code: "",
     logo_url: "",
   });
   const [saving, setSaving] = useState(false);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -91,18 +79,19 @@ export default function CompaniesPage() {
 
       if (error) throw error;
 
-      // Get access codes for companies
+      // Get access codes count per company
       const { data: accessCodesData, error: accessCodesError } = await supabase
         .from("access_codes")
-        .select("*")
+        .select("entity_id")
         .eq("entity_type", "company");
 
       if (accessCodesError) throw accessCodesError;
 
-      // Create a map of company_id -> access_code
-      const accessCodeMap = new Map<string, AccessCode>();
+      // Count access codes per company
+      const accessCodesCountMap = new Map<string, number>();
       (accessCodesData || []).forEach((ac) => {
-        accessCodeMap.set(ac.entity_id, ac as AccessCode);
+        const current = accessCodesCountMap.get(ac.entity_id) || 0;
+        accessCodesCountMap.set(ac.entity_id, current + 1);
       });
 
       // Get user counts for each company
@@ -115,7 +104,7 @@ export default function CompaniesPage() {
 
           return {
             ...company,
-            access_code: accessCodeMap.get(company.id) || null,
+            access_codes_count: accessCodesCountMap.get(company.id) || 0,
             _count: { users: count || 0 },
           };
         })
@@ -139,35 +128,24 @@ export default function CompaniesPage() {
       setSelectedCompany(company);
       setFormData({
         name: company.name,
-        access_code: company.access_code?.code || "",
         logo_url: company.logo_url || "",
       });
     } else {
       setSelectedCompany(null);
       setFormData({
         name: "",
-        access_code: generateAccessCode(),
         logo_url: "",
       });
     }
     setDialogOpen(true);
   };
 
-  const generateAccessCode = () => {
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    let code = "";
-    for (let i = 0; i < 8; i++) {
-      code += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return code;
-  };
-
   const handleSave = async () => {
-    if (!formData.name.trim() || !formData.access_code.trim()) {
+    if (!formData.name.trim()) {
       toast({
         variant: "destructive",
         title: "Errore",
-        description: "Nome e codice accesso sono obbligatori",
+        description: "Il nome è obbligatorio",
       });
       return;
     }
@@ -175,8 +153,7 @@ export default function CompaniesPage() {
     setSaving(true);
     try {
       if (selectedCompany) {
-        // Update company
-        const { error: companyError } = await supabase
+        const { error } = await supabase
           .from("companies")
           .update({
             name: formData.name,
@@ -184,61 +161,23 @@ export default function CompaniesPage() {
           })
           .eq("id", selectedCompany.id);
 
-        if (companyError) throw companyError;
-
-        // Update or create access code
-        if (selectedCompany.access_code) {
-          const { error: codeError } = await supabase
-            .from("access_codes")
-            .update({ code: formData.access_code })
-            .eq("id", selectedCompany.access_code.id);
-
-          if (codeError) throw codeError;
-        } else {
-          const { error: codeError } = await supabase
-            .from("access_codes")
-            .insert({
-              code: formData.access_code,
-              entity_type: "company",
-              entity_id: selectedCompany.id,
-              assigned_role: "employee",
-            });
-
-          if (codeError) throw codeError;
-        }
+        if (error) throw error;
 
         toast({
           title: "Successo",
           description: "Azienda aggiornata",
         });
       } else {
-        // Create company
-        const { data: newCompany, error: companyError } = await supabase
-          .from("companies")
-          .insert({
-            name: formData.name,
-            logo_url: formData.logo_url || null,
-          })
-          .select()
-          .single();
+        const { error } = await supabase.from("companies").insert({
+          name: formData.name,
+          logo_url: formData.logo_url || null,
+        });
 
-        if (companyError) throw companyError;
-
-        // Create access code
-        const { error: codeError } = await supabase
-          .from("access_codes")
-          .insert({
-            code: formData.access_code,
-            entity_type: "company",
-            entity_id: newCompany.id,
-            assigned_role: "employee",
-          });
-
-        if (codeError) throw codeError;
+        if (error) throw error;
 
         toast({
           title: "Successo",
-          description: "Azienda creata",
+          description: "Azienda creata. Vai a Codici Accesso per creare i codici di registrazione.",
         });
       }
 
@@ -286,16 +225,8 @@ export default function CompaniesPage() {
     }
   };
 
-  const copyAccessCode = (code: string, id: string) => {
-    navigator.clipboard.writeText(code);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
-  };
-
-  const filteredCompanies = companies.filter(
-    (company) =>
-      company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (company.access_code?.code || "").toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredCompanies = companies.filter((company) =>
+    company.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -328,9 +259,7 @@ export default function CompaniesPage() {
           <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
             <CardHeader>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <CardTitle className="text-lg">
-                  {companies.length} Aziende
-                </CardTitle>
+                <CardTitle className="text-lg">{companies.length} Aziende</CardTitle>
                 <div className="relative w-full sm:w-64">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -348,7 +277,7 @@ export default function CompaniesPage() {
                   <TableHeader>
                     <TableRow className="bg-muted/50">
                       <TableHead>Azienda</TableHead>
-                      <TableHead>Codice Accesso</TableHead>
+                      <TableHead>Codici Accesso</TableHead>
                       <TableHead>Utenti</TableHead>
                       <TableHead>Creata il</TableHead>
                       <TableHead className="w-24">Azioni</TableHead>
@@ -388,37 +317,25 @@ export default function CompaniesPage() {
                                   className="w-10 h-10 rounded-lg object-cover"
                                 />
                               ) : (
-                                <div className="w-10 h-10 rounded-lg bg-bravo-purple/10 flex items-center justify-center">
-                                  <Building2 className="h-5 w-5 text-bravo-purple" />
+                                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                                  <Building2 className="h-5 w-5 text-primary" />
                                 </div>
                               )}
                               <span className="font-medium">{company.name}</span>
                             </div>
                           </TableCell>
                           <TableCell>
-                            {company.access_code ? (
-                              <div className="flex items-center gap-2">
-                                <code className="px-2 py-1 rounded bg-muted text-sm font-mono">
-                                  {company.access_code.code}
-                                </code>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8"
-                                  onClick={() =>
-                                    copyAccessCode(company.access_code!.code, company.id)
-                                  }
-                                >
-                                  {copiedId === company.id ? (
-                                    <Check className="h-4 w-4 text-green-500" />
-                                  ) : (
-                                    <Copy className="h-4 w-4" />
-                                  )}
-                                </Button>
-                              </div>
-                            ) : (
-                              <span className="text-muted-foreground text-sm">-</span>
-                            )}
+                            <Link
+                              to={`/super-admin/access-codes?entity_type=company&entity_id=${company.id}`}
+                              className="inline-flex items-center gap-1.5 text-sm hover:underline"
+                            >
+                              <Key className="h-4 w-4 text-muted-foreground" />
+                              <span>
+                                {company.access_codes_count}{" "}
+                                {company.access_codes_count === 1 ? "codice" : "codici"}
+                              </span>
+                              <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                            </Link>
                           </TableCell>
                           <TableCell>{company._count?.users || 0}</TableCell>
                           <TableCell>
@@ -474,56 +391,34 @@ export default function CompaniesPage() {
               <Input
                 id="name"
                 value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Nome azienda"
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="access_code">Codice Accesso *</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="access_code"
-                  value={formData.access_code}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      access_code: e.target.value.toUpperCase(),
-                    })
-                  }
-                  placeholder="CODICE123"
-                  className="font-mono"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() =>
-                    setFormData({ ...formData, access_code: generateAccessCode() })
-                  }
-                >
-                  Genera
-                </Button>
-              </div>
             </div>
             <div className="space-y-2">
               <Label>Logo (opzionale)</Label>
               <LogoUpload
                 currentLogoUrl={formData.logo_url || null}
-                onLogoChange={(url) =>
-                  setFormData({ ...formData, logo_url: url || "" })
-                }
-                entityId={selectedCompany?.id}
+                onLogoChange={(url) => setFormData({ ...formData, logo_url: url || "" })}
                 bucket="company-logos"
               />
             </div>
+            {!selectedCompany && (
+              <div className="p-3 rounded-lg bg-muted/50 text-sm text-muted-foreground">
+                <p>
+                  Dopo aver creato l'azienda, vai in{" "}
+                  <span className="font-medium text-foreground">Codici Accesso</span> per
+                  generare i codici di registrazione per dipendenti e HR admin.
+                </p>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Annulla
             </Button>
             <Button onClick={handleSave} disabled={saving}>
-              {saving ? "Salvataggio..." : "Salva"}
+              {saving ? "Salvataggio..." : selectedCompany ? "Salva" : "Crea"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -533,10 +428,10 @@ export default function CompaniesPage() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent className="bg-background">
           <AlertDialogHeader>
-            <AlertDialogTitle>Eliminare questa azienda?</AlertDialogTitle>
+            <AlertDialogTitle>Elimina Azienda</AlertDialogTitle>
             <AlertDialogDescription>
-              Questa azione non può essere annullata. L'azienda "
-              {selectedCompany?.name}" verrà eliminata permanentemente.
+              Sei sicuro di voler eliminare <strong>{selectedCompany?.name}</strong>? Questa
+              azione eliminerà anche tutti i codici di accesso associati.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

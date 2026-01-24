@@ -16,6 +16,7 @@ import {
   Tag,
   Heart,
   Mail,
+  KeyRound,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -46,6 +47,16 @@ const sidebarItems = [
     href: "/super-admin/companies",
   },
   {
+    label: "Associazioni",
+    icon: Heart,
+    href: "/super-admin/associations",
+  },
+  {
+    label: "Codici Accesso",
+    icon: KeyRound,
+    href: "/super-admin/access-codes",
+  },
+  {
     label: "Esperienze",
     icon: Calendar,
     href: "/super-admin/experiences",
@@ -59,11 +70,6 @@ const sidebarItems = [
     label: "Utenti",
     icon: Users,
     href: "/super-admin/users",
-  },
-  {
-    label: "Associazioni",
-    icon: Heart,
-    href: "/super-admin/associations",
   },
   {
     label: "Città",
