@@ -153,6 +153,12 @@ export default function UsersPage() {
         return (
           <Badge className="bg-bravo-magenta text-white">HR Admin</Badge>
         );
+      case "association_admin":
+        return (
+          <Badge className="bg-secondary text-secondary-foreground">
+            Admin Associazione
+          </Badge>
+        );
       default:
         return <Badge variant="secondary">Dipendente</Badge>;
     }
@@ -189,7 +195,8 @@ export default function UsersPage() {
 
     setSaving(true);
     try {
-      const { error } = await supabase
+      // Update profile
+      const { error: profileError } = await supabase
         .from("profiles")
         .update({
           first_name: editFormData.first_name.trim(),
@@ -200,7 +207,26 @@ export default function UsersPage() {
         })
         .eq("id", editingUser.id);
 
-      if (error) throw error;
+      if (profileError) throw profileError;
+
+      // Update role in user_roles table if role changed
+      if (editFormData.role !== editingUser.role) {
+        // Delete old role
+        await supabase
+          .from("user_roles")
+          .delete()
+          .eq("user_id", editingUser.id);
+        
+        // Insert new role
+        const { error: roleError } = await supabase
+          .from("user_roles")
+          .insert({
+            user_id: editingUser.id,
+            role: editFormData.role as "employee" | "hr_admin" | "association_admin" | "super_admin",
+          });
+
+        if (roleError) throw roleError;
+      }
 
       toast.success("Utente aggiornato con successo");
       setEditDialogOpen(false);
@@ -479,6 +505,7 @@ export default function UsersPage() {
                 <SelectContent className="bg-popover">
                   <SelectItem value="employee">Dipendente</SelectItem>
                   <SelectItem value="hr_admin">HR Admin</SelectItem>
+                  <SelectItem value="association_admin">Admin Associazione</SelectItem>
                   <SelectItem value="super_admin">Super Admin</SelectItem>
                 </SelectContent>
               </Select>
