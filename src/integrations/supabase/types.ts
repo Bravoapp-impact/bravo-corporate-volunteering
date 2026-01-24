@@ -594,6 +594,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_tenants: {
+        Row: {
+          association_id: string | null
+          company_id: string | null
+          created_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          association_id?: string | null
+          company_id?: string | null
+          created_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          association_id?: string | null
+          company_id?: string | null
+          created_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
