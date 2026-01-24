@@ -38,12 +38,24 @@ import { it } from "date-fns/locale";
 import { devLog } from "@/lib/logger";
 import { LogoUpload } from "@/components/super-admin/LogoUpload";
 
+interface AccessCode {
+  id: string;
+  code: string;
+  entity_type: string;
+  entity_id: string;
+  assigned_role: string;
+  is_active: boolean;
+  max_uses: number | null;
+  expires_at: string | null;
+  use_count: number;
+}
+
 interface Company {
   id: string;
   name: string;
-  access_code: string;
   logo_url: string | null;
   created_at: string;
+  access_code?: AccessCode | null;
   _count?: {
     users: number;
   };
@@ -71,13 +83,27 @@ export default function CompaniesPage() {
 
   const fetchCompanies = async () => {
     try {
-      // Get companies with user count
+      // Get companies
       const { data: companiesData, error } = await supabase
         .from("companies")
         .select("*")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
+
+      // Get access codes for companies
+      const { data: accessCodesData, error: accessCodesError } = await supabase
+        .from("access_codes")
+        .select("*")
+        .eq("entity_type", "company");
+
+      if (accessCodesError) throw accessCodesError;
+
+      // Create a map of company_id -> access_code
+      const accessCodeMap = new Map<string, AccessCode>();
+      (accessCodesData || []).forEach((ac) => {
+        accessCodeMap.set(ac.entity_id, ac as AccessCode);
+      });
 
       // Get user counts for each company
       const companiesWithCounts = await Promise.all(
@@ -89,6 +115,7 @@ export default function CompaniesPage() {
 
           return {
             ...company,
+            access_code: accessCodeMap.get(company.id) || null,
             _count: { users: count || 0 },
           };
         })
@@ -112,7 +139,7 @@ export default function CompaniesPage() {
       setSelectedCompany(company);
       setFormData({
         name: company.name,
-        access_code: company.access_code,
+        access_code: company.access_code?.code || "",
         logo_url: company.logo_url || "",
       });
     } else {
@@ -148,31 +175,66 @@ export default function CompaniesPage() {
     setSaving(true);
     try {
       if (selectedCompany) {
-        // Update
-        const { error } = await supabase
+        // Update company
+        const { error: companyError } = await supabase
           .from("companies")
           .update({
             name: formData.name,
-            access_code: formData.access_code,
             logo_url: formData.logo_url || null,
           })
           .eq("id", selectedCompany.id);
 
-        if (error) throw error;
+        if (companyError) throw companyError;
+
+        // Update or create access code
+        if (selectedCompany.access_code) {
+          const { error: codeError } = await supabase
+            .from("access_codes")
+            .update({ code: formData.access_code })
+            .eq("id", selectedCompany.access_code.id);
+
+          if (codeError) throw codeError;
+        } else {
+          const { error: codeError } = await supabase
+            .from("access_codes")
+            .insert({
+              code: formData.access_code,
+              entity_type: "company",
+              entity_id: selectedCompany.id,
+              assigned_role: "employee",
+            });
+
+          if (codeError) throw codeError;
+        }
 
         toast({
           title: "Successo",
           description: "Azienda aggiornata",
         });
       } else {
-        // Create
-        const { error } = await supabase.from("companies").insert({
-          name: formData.name,
-          access_code: formData.access_code,
-          logo_url: formData.logo_url || null,
-        });
+        // Create company
+        const { data: newCompany, error: companyError } = await supabase
+          .from("companies")
+          .insert({
+            name: formData.name,
+            logo_url: formData.logo_url || null,
+          })
+          .select()
+          .single();
 
-        if (error) throw error;
+        if (companyError) throw companyError;
+
+        // Create access code
+        const { error: codeError } = await supabase
+          .from("access_codes")
+          .insert({
+            code: formData.access_code,
+            entity_type: "company",
+            entity_id: newCompany.id,
+            assigned_role: "employee",
+          });
+
+        if (codeError) throw codeError;
 
         toast({
           title: "Successo",
@@ -233,7 +295,7 @@ export default function CompaniesPage() {
   const filteredCompanies = companies.filter(
     (company) =>
       company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      company.access_code.toLowerCase().includes(searchTerm.toLowerCase())
+      (company.access_code?.code || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -334,25 +396,29 @@ export default function CompaniesPage() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <div className="flex items-center gap-2">
-                              <code className="px-2 py-1 rounded bg-muted text-sm font-mono">
-                                {company.access_code}
-                              </code>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={() =>
-                                  copyAccessCode(company.access_code, company.id)
-                                }
-                              >
-                                {copiedId === company.id ? (
-                                  <Check className="h-4 w-4 text-green-500" />
-                                ) : (
-                                  <Copy className="h-4 w-4" />
-                                )}
-                              </Button>
-                            </div>
+                            {company.access_code ? (
+                              <div className="flex items-center gap-2">
+                                <code className="px-2 py-1 rounded bg-muted text-sm font-mono">
+                                  {company.access_code.code}
+                                </code>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() =>
+                                    copyAccessCode(company.access_code!.code, company.id)
+                                  }
+                                >
+                                  {copiedId === company.id ? (
+                                    <Check className="h-4 w-4 text-green-500" />
+                                  ) : (
+                                    <Copy className="h-4 w-4" />
+                                  )}
+                                </Button>
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground text-sm">-</span>
+                            )}
                           </TableCell>
                           <TableCell>{company._count?.users || 0}</TableCell>
                           <TableCell>
