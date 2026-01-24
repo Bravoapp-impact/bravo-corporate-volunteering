@@ -38,9 +38,9 @@ export default function Register() {
 
     setIsValidatingCode(true);
     try {
-      const company = await validateAccessCode(formData.accessCode);
-      if (company) {
-        setCompanyName(company.name);
+      const codeInfo = await validateAccessCode(formData.accessCode);
+      if (codeInfo) {
+        setCompanyName(codeInfo.entity_name);
       } else {
         setCompanyName(null);
       }
@@ -66,10 +66,17 @@ export default function Register() {
 
       toast({
         title: "Registrazione completata!",
-        description: `Benvenuto in ${result.company.name}. Ora puoi accedere.`,
+        description: `Benvenuto in ${result.entityName}. Ora puoi accedere.`,
       });
 
-      navigate("/app/experiences");
+      // Redirect based on role
+      if (result.role === 'hr_admin') {
+        navigate("/hr");
+      } else if (result.role === 'association_admin') {
+        navigate("/association"); // TODO: create this route
+      } else {
+        navigate("/app/experiences");
+      }
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -93,16 +100,16 @@ export default function Register() {
           transition={{ duration: 0.4, delay: 0.3 }}
           className="space-y-4"
         >
-          {/* Company Code - First! */}
+          {/* Access Code - First! */}
           <div className="space-y-2">
-            <Label htmlFor="accessCode">Codice Azienda</Label>
+            <Label htmlFor="accessCode">Codice di Accesso</Label>
             <div className="relative">
               <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 id="accessCode"
                 name="accessCode"
                 type="text"
-                placeholder="Inserisci il codice della tua azienda"
+                placeholder="Inserisci il codice di accesso"
                 value={formData.accessCode}
                 onChange={handleChange}
                 onBlur={handleCodeBlur}
@@ -119,7 +126,7 @@ export default function Register() {
                 animate={{ opacity: 1, height: "auto" }}
                 className="text-sm text-secondary-foreground flex items-center gap-2 bg-secondary px-3 py-2 rounded-lg"
               >
-                <span className="text-lg">🏢</span>
+                <span className="text-lg">✓</span>
                 {companyName}
               </motion.p>
             )}

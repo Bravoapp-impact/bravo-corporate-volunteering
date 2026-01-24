@@ -13,9 +13,16 @@ export interface SignInData {
   password: string;
 }
 
-export async function validateAccessCode(accessCode: string) {
+export interface AccessCodeValidation {
+  entity_type: string;
+  entity_id: string;
+  entity_name: string;
+  assigned_role: string;
+}
+
+export async function validateAccessCode(accessCode: string): Promise<AccessCodeValidation | null> {
   const { data, error } = await supabase
-    .rpc('validate_company_access_code', { code: accessCode });
+    .rpc('validate_access_code', { p_code: accessCode });
 
   if (error) throw error;
   
@@ -23,12 +30,33 @@ export async function validateAccessCode(accessCode: string) {
   return data && data.length > 0 ? data[0] : null;
 }
 
+export async function incrementAccessCodeUsage(accessCode: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .rpc('increment_access_code_usage', { p_code: accessCode });
+
+  if (error) throw error;
+  return data === true;
+}
+
 export async function signUp({ email, password, firstName, lastName, accessCode }: SignUpData) {
   // First validate the access code
-  const company = await validateAccessCode(accessCode);
+  const codeInfo = await validateAccessCode(accessCode);
   
-  if (!company) {
-    throw new Error("Codice azienda non valido");
+  if (!codeInfo) {
+    throw new Error("Codice di accesso non valido o scaduto");
+  }
+
+  // Build user metadata based on entity type
+  const userMetadata: Record<string, unknown> = {
+    first_name: firstName,
+    last_name: lastName,
+    role: codeInfo.assigned_role,
+  };
+
+  if (codeInfo.entity_type === 'company') {
+    userMetadata.company_id = codeInfo.entity_id;
+  } else if (codeInfo.entity_type === 'association') {
+    userMetadata.association_id = codeInfo.entity_id;
   }
 
   const { data, error } = await supabase.auth.signUp({
@@ -36,17 +64,21 @@ export async function signUp({ email, password, firstName, lastName, accessCode 
     password,
     options: {
       emailRedirectTo: window.location.origin,
-      data: {
-        first_name: firstName,
-        last_name: lastName,
-        company_id: company.id,
-        role: "employee",
-      },
+      data: userMetadata,
     },
   });
 
   if (error) throw error;
-  return { ...data, company };
+
+  // Increment usage counter
+  await incrementAccessCodeUsage(accessCode);
+
+  return { 
+    ...data, 
+    entityName: codeInfo.entity_name,
+    entityType: codeInfo.entity_type,
+    role: codeInfo.assigned_role 
+  };
 }
 
 export async function signIn({ email, password }: SignInData) {
@@ -90,7 +122,7 @@ export async function getCurrentProfile() {
 
   const { data, error } = await supabase
     .from("profiles")
-    .select("*, companies(*)")
+    .select("*, companies(*), associations(*)")
     .eq("id", user.id)
     .single();
 

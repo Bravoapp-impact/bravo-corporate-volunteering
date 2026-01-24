@@ -10,8 +10,14 @@ interface Profile {
   last_name: string | null;
   role: string;
   company_id: string | null;
+  association_id: string | null;
   created_at: string;
   companies?: {
+    id: string;
+    name: string;
+    logo_url: string | null;
+  } | null;
+  associations?: {
     id: string;
     name: string;
     logo_url: string | null;
@@ -39,7 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("*, companies(*)")
+        .select("*, companies(*), associations(*)")
         .eq("id", userId)
         .single();
 

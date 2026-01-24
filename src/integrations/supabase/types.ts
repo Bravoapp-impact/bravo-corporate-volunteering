@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      access_codes: {
+        Row: {
+          assigned_role: string
+          code: string
+          created_at: string
+          entity_id: string
+          entity_type: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          max_uses: number | null
+          updated_at: string
+          use_count: number
+        }
+        Insert: {
+          assigned_role?: string
+          code: string
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          updated_at?: string
+          use_count?: number
+        }
+        Update: {
+          assigned_role?: string
+          code?: string
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          updated_at?: string
+          use_count?: number
+        }
+        Relationships: []
+      }
       association_cities: {
         Row: {
           association_id: string
@@ -196,21 +238,18 @@ export type Database = {
       }
       companies: {
         Row: {
-          access_code: string
           created_at: string
           id: string
           logo_url: string | null
           name: string
         }
         Insert: {
-          access_code: string
           created_at?: string
           id?: string
           logo_url?: string | null
           name: string
         }
         Update: {
-          access_code?: string
           created_at?: string
           id?: string
           logo_url?: string | null
@@ -488,6 +527,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          association_id: string | null
           company_id: string | null
           created_at: string
           email: string
@@ -497,6 +537,7 @@ export type Database = {
           role: string
         }
         Insert: {
+          association_id?: string | null
           company_id?: string | null
           created_at?: string
           email: string
@@ -506,6 +547,7 @@ export type Database = {
           role?: string
         }
         Update: {
+          association_id?: string | null
           company_id?: string | null
           created_at?: string
           email?: string
@@ -515,6 +557,13 @@ export type Database = {
           role?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "profiles_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "profiles_company_id_fkey"
             columns: ["company_id"]
@@ -533,9 +582,15 @@ export type Database = {
         Args: { exp_date_id: string }
         Returns: number
       }
+      get_user_association_id: { Args: { user_uuid: string }; Returns: string }
       get_user_company_id: { Args: { user_uuid: string }; Returns: string }
       get_user_role: { Args: { user_uuid: string }; Returns: string }
+      increment_access_code_usage: {
+        Args: { p_code: string }
+        Returns: boolean
+      }
       is_admin: { Args: { user_uuid: string }; Returns: boolean }
+      is_association_admin: { Args: { user_uuid: string }; Returns: boolean }
       is_booking_cancellable: {
         Args: { booking_uuid: string }
         Returns: boolean
@@ -545,6 +600,15 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: { user_uuid: string }; Returns: boolean }
+      validate_access_code: {
+        Args: { p_code: string }
+        Returns: {
+          assigned_role: string
+          entity_id: string
+          entity_name: string
+          entity_type: string
+        }[]
+      }
       validate_company_access_code: {
         Args: { code: string }
         Returns: {
