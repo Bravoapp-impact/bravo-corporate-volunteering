@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Search, User, Building2, Pencil, Trash2 } from "lucide-react";
+import { Search, User, Building2, Pencil, Trash2, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -38,6 +38,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
 import { SuperAdminLayout } from "@/components/layout/SuperAdminLayout";
 import { supabase } from "@/integrations/supabase/client";
@@ -54,7 +55,12 @@ interface Profile {
   role: string;
   created_at: string;
   company_id: string | null;
+  association_id: string | null;
   companies: {
+    id: string;
+    name: string;
+  } | null;
+  associations: {
     id: string;
     name: string;
   } | null;
@@ -65,17 +71,30 @@ interface Company {
   name: string;
 }
 
+interface Association {
+  id: string;
+  name: string;
+}
+
 interface EditFormData {
   first_name: string;
   last_name: string;
   email: string;
   role: string;
   company_id: string | null;
+  association_id: string | null;
 }
+
+// Helper per determinare quali campi mostrare in base al ruolo
+const roleRequiresCompany = (role: string) => ['employee', 'hr_admin'].includes(role);
+const roleRequiresAssociation = (role: string) => role === 'association_admin';
+const roleShowsCompany = (role: string) => ['employee', 'hr_admin', 'super_admin'].includes(role);
+const roleShowsAssociation = (role: string) => ['association_admin', 'super_admin'].includes(role);
 
 export default function UsersPage() {
   const [users, setUsers] = useState<Profile[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
+  const [associations, setAssociations] = useState<Association[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
@@ -90,6 +109,7 @@ export default function UsersPage() {
     email: "",
     role: "employee",
     company_id: null,
+    association_id: null,
   });
   const [saving, setSaving] = useState(false);
   
@@ -104,19 +124,22 @@ export default function UsersPage() {
 
   const fetchData = async () => {
     try {
-      const [usersRes, companiesRes] = await Promise.all([
+      const [usersRes, companiesRes, associationsRes] = await Promise.all([
         supabase
           .from("profiles")
-          .select("*, companies(id, name)")
+          .select("*, companies(id, name), associations(id, name)")
           .order("created_at", { ascending: false }),
         supabase.from("companies").select("id, name").order("name"),
+        supabase.from("associations").select("id, name").order("name"),
       ]);
 
       if (usersRes.error) throw usersRes.error;
       if (companiesRes.error) throw companiesRes.error;
+      if (associationsRes.error) throw associationsRes.error;
 
       setUsers(usersRes.data || []);
       setCompanies(companiesRes.data || []);
+      setAssociations(associationsRes.data || []);
     } catch (error) {
       devLog.error("Error fetching data:", error);
     } finally {
@@ -164,6 +187,28 @@ export default function UsersPage() {
     }
   };
 
+  // Calcola l'avviso per il cambio ruolo
+  const getRoleChangeWarning = () => {
+    if (!editingUser) return null;
+    
+    const originalRole = editingUser.role;
+    const newRole = editFormData.role;
+    
+    if (originalRole === newRole) return null;
+    
+    // Da ruolo aziendale a association_admin
+    if (roleRequiresCompany(originalRole) && newRole === 'association_admin' && editingUser.companies) {
+      return `L'utente verrà rimosso da "${editingUser.companies.name}"`;
+    }
+    
+    // Da association_admin a ruolo aziendale
+    if (originalRole === 'association_admin' && roleRequiresCompany(newRole) && editingUser.associations) {
+      return `L'utente verrà rimosso da "${editingUser.associations.name}"`;
+    }
+    
+    return null;
+  };
+
   const handleOpenEdit = (user: Profile) => {
     setEditingUser(user);
     setEditFormData({
@@ -172,14 +217,33 @@ export default function UsersPage() {
       email: user.email,
       role: user.role,
       company_id: user.company_id,
+      association_id: user.association_id,
     });
     setEditDialogOpen(true);
+  };
+
+  const handleRoleChange = (newRole: string) => {
+    setEditFormData((prev) => {
+      const updated = { ...prev, role: newRole };
+      
+      // Pulizia campi in base al nuovo ruolo
+      if (roleRequiresCompany(newRole)) {
+        // employee o hr_admin: pulisci association_id
+        updated.association_id = null;
+      } else if (roleRequiresAssociation(newRole)) {
+        // association_admin: pulisci company_id
+        updated.company_id = null;
+      }
+      // super_admin: mantiene entrambi (opzionali)
+      
+      return updated;
+    });
   };
 
   const handleSaveEdit = async () => {
     if (!editingUser) return;
     
-    // Validation
+    // Validazione base
     if (!editFormData.email.trim()) {
       toast.error("L'email è obbligatoria");
       return;
@@ -193,8 +257,32 @@ export default function UsersPage() {
       return;
     }
 
+    // Validazione entità in base al ruolo
+    if (roleRequiresCompany(editFormData.role) && !editFormData.company_id) {
+      toast.error("Seleziona un'azienda per questo ruolo");
+      return;
+    }
+    if (roleRequiresAssociation(editFormData.role) && !editFormData.association_id) {
+      toast.error("Seleziona un'associazione per questo ruolo");
+      return;
+    }
+
     setSaving(true);
     try {
+      // Prepara i valori per il salvataggio in base al ruolo
+      let finalCompanyId: string | null = null;
+      let finalAssociationId: string | null = null;
+
+      if (roleRequiresCompany(editFormData.role)) {
+        finalCompanyId = editFormData.company_id;
+      } else if (roleRequiresAssociation(editFormData.role)) {
+        finalAssociationId = editFormData.association_id;
+      } else if (editFormData.role === 'super_admin') {
+        // Super admin: mantiene entrambi se valorizzati
+        finalCompanyId = editFormData.company_id;
+        finalAssociationId = editFormData.association_id;
+      }
+
       // Update profile
       const { error: profileError } = await supabase
         .from("profiles")
@@ -203,27 +291,35 @@ export default function UsersPage() {
           last_name: editFormData.last_name.trim(),
           email: editFormData.email.trim(),
           role: editFormData.role,
-          company_id: editFormData.company_id,
+          company_id: finalCompanyId,
+          association_id: finalAssociationId,
         })
         .eq("id", editingUser.id);
 
       if (profileError) throw profileError;
 
+      // Update user_tenants table
+      const { error: tenantError } = await supabase
+        .from("user_tenants")
+        .upsert({
+          user_id: editingUser.id,
+          company_id: finalCompanyId,
+          association_id: finalAssociationId,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'user_id' });
+
+      if (tenantError) {
+        devLog.error("Error updating user_tenants:", tenantError);
+        // Non blocchiamo, profiles è il dato principale
+      }
+
       // Update role in user_roles table if role changed
       if (editFormData.role !== editingUser.role) {
-        // Delete old role
-        await supabase
-          .from("user_roles")
-          .delete()
-          .eq("user_id", editingUser.id);
-        
-        // Insert new role
-        const { error: roleError } = await supabase
-          .from("user_roles")
-          .insert({
-            user_id: editingUser.id,
-            role: editFormData.role as "employee" | "hr_admin" | "association_admin" | "super_admin",
-          });
+        // Use RPC function for role change (bypasses RLS)
+        const { error: roleError } = await supabase.rpc('admin_set_user_role', {
+          p_user_id: editingUser.id,
+          p_role: editFormData.role as "employee" | "hr_admin" | "association_admin" | "super_admin",
+        });
 
         if (roleError) throw roleError;
       }
@@ -267,6 +363,29 @@ export default function UsersPage() {
       setDeleting(false);
     }
   };
+
+  // Funzione per mostrare azienda/associazione nella tabella
+  const getEntityDisplay = (user: Profile) => {
+    if (user.companies) {
+      return (
+        <div className="flex items-center gap-2">
+          <Building2 className="h-4 w-4 text-muted-foreground" />
+          {user.companies.name}
+        </div>
+      );
+    }
+    if (user.associations) {
+      return (
+        <div className="flex items-center gap-2">
+          <Building2 className="h-4 w-4 text-bravo-magenta" />
+          {user.associations.name}
+        </div>
+      );
+    }
+    return <span className="text-muted-foreground">—</span>;
+  };
+
+  const roleChangeWarning = getRoleChangeWarning();
 
   return (
     <SuperAdminLayout>
@@ -313,6 +432,7 @@ export default function UsersPage() {
                     <SelectItem value="all">Tutti i ruoli</SelectItem>
                     <SelectItem value="employee">Dipendente</SelectItem>
                     <SelectItem value="hr_admin">HR Admin</SelectItem>
+                    <SelectItem value="association_admin">Admin Associazione</SelectItem>
                     <SelectItem value="super_admin">Super Admin</SelectItem>
                   </SelectContent>
                 </Select>
@@ -340,7 +460,7 @@ export default function UsersPage() {
                       <TableHead>Utente</TableHead>
                       <TableHead>Email</TableHead>
                       <TableHead>Ruolo</TableHead>
-                      <TableHead>Azienda</TableHead>
+                      <TableHead>Azienda/Associazione</TableHead>
                       <TableHead>Registrato il</TableHead>
                       <TableHead className="text-right">Azioni</TableHead>
                     </TableRow>
@@ -386,16 +506,7 @@ export default function UsersPage() {
                             {user.email}
                           </TableCell>
                           <TableCell>{getRoleBadge(user.role)}</TableCell>
-                          <TableCell>
-                            {user.companies ? (
-                              <div className="flex items-center gap-2">
-                                <Building2 className="h-4 w-4 text-muted-foreground" />
-                                {user.companies.name}
-                              </div>
-                            ) : (
-                              <span className="text-muted-foreground">—</span>
-                            )}
-                          </TableCell>
+                          <TableCell>{getEntityDisplay(user)}</TableCell>
                           <TableCell>
                             {format(new Date(user.created_at), "dd MMM yyyy", {
                               locale: it,
@@ -495,9 +606,7 @@ export default function UsersPage() {
               <Label htmlFor="role">Ruolo</Label>
               <Select
                 value={editFormData.role}
-                onValueChange={(value) =>
-                  setEditFormData((prev) => ({ ...prev, role: value }))
-                }
+                onValueChange={handleRoleChange}
               >
                 <SelectTrigger id="role" className="bg-background">
                   <SelectValue />
@@ -510,30 +619,78 @@ export default function UsersPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="company">Azienda</Label>
-              <Select
-                value={editFormData.company_id || "none"}
-                onValueChange={(value) =>
-                  setEditFormData((prev) => ({
-                    ...prev,
-                    company_id: value === "none" ? null : value,
-                  }))
-                }
-              >
-                <SelectTrigger id="company" className="bg-background">
-                  <SelectValue placeholder="Seleziona azienda" />
-                </SelectTrigger>
-                <SelectContent className="bg-popover">
-                  <SelectItem value="none">Nessuna azienda</SelectItem>
-                  {companies.map((company) => (
-                    <SelectItem key={company.id} value={company.id}>
-                      {company.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+
+            {/* Avviso cambio ruolo */}
+            {roleChangeWarning && (
+              <Alert variant="destructive" className="bg-destructive/10 border-destructive/30">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>{roleChangeWarning}</AlertDescription>
+              </Alert>
+            )}
+
+            {/* Campo Azienda - visibile per employee, hr_admin, super_admin */}
+            {roleShowsCompany(editFormData.role) && (
+              <div className="space-y-2">
+                <Label htmlFor="company">
+                  Azienda {roleRequiresCompany(editFormData.role) && <span className="text-destructive">*</span>}
+                </Label>
+                <Select
+                  value={editFormData.company_id || "none"}
+                  onValueChange={(value) =>
+                    setEditFormData((prev) => ({
+                      ...prev,
+                      company_id: value === "none" ? null : value,
+                    }))
+                  }
+                >
+                  <SelectTrigger id="company" className="bg-background">
+                    <SelectValue placeholder="Seleziona azienda" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover">
+                    {!roleRequiresCompany(editFormData.role) && (
+                      <SelectItem value="none">Nessuna azienda</SelectItem>
+                    )}
+                    {companies.map((company) => (
+                      <SelectItem key={company.id} value={company.id}>
+                        {company.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Campo Associazione - visibile per association_admin, super_admin */}
+            {roleShowsAssociation(editFormData.role) && (
+              <div className="space-y-2">
+                <Label htmlFor="association">
+                  Associazione {roleRequiresAssociation(editFormData.role) && <span className="text-destructive">*</span>}
+                </Label>
+                <Select
+                  value={editFormData.association_id || "none"}
+                  onValueChange={(value) =>
+                    setEditFormData((prev) => ({
+                      ...prev,
+                      association_id: value === "none" ? null : value,
+                    }))
+                  }
+                >
+                  <SelectTrigger id="association" className="bg-background">
+                    <SelectValue placeholder="Seleziona associazione" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover">
+                    {!roleRequiresAssociation(editFormData.role) && (
+                      <SelectItem value="none">Nessuna associazione</SelectItem>
+                    )}
+                    {associations.map((association) => (
+                      <SelectItem key={association.id} value={association.id}>
+                        {association.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button
