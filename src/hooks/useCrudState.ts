@@ -44,6 +44,10 @@ export function useCrudState<T>({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
+  // Stabilize orderBy values to prevent infinite re-fetches
+  const orderByColumn = orderBy?.column ? String(orderBy.column) : undefined;
+  const orderByAscending = orderBy?.ascending ?? true;
+
   const fetchItems = useCallback(async () => {
     try {
       setLoading(true);
@@ -51,9 +55,9 @@ export function useCrudState<T>({
       const tableRef = supabase.from(tableName as any);
       let query = tableRef.select("*");
 
-      if (orderBy) {
-        query = query.order(String(orderBy.column), {
-          ascending: orderBy.ascending ?? true,
+      if (orderByColumn) {
+        query = query.order(orderByColumn, {
+          ascending: orderByAscending,
         });
       }
 
@@ -71,7 +75,7 @@ export function useCrudState<T>({
     } finally {
       setLoading(false);
     }
-  }, [tableName, orderBy, toast]);
+  }, [tableName, orderByColumn, orderByAscending, toast]);
 
   useEffect(() => {
     if (fetchOnMount) {
