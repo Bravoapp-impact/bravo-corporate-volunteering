@@ -12,6 +12,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import {
   DropdownMenu,
@@ -67,6 +68,12 @@ export function HRLayout({ children }: HRLayoutProps) {
 
   const companyLogo = profile?.companies?.logo_url;
   const companyName = profile?.companies?.name;
+
+  const getInitials = () => {
+    const first = profile?.first_name?.[0] || "";
+    const last = profile?.last_name?.[0] || "";
+    return (first + last).toUpperCase() || "U";
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -157,9 +164,12 @@ export function HRLayout({ children }: HRLayoutProps) {
                 variant="ghost"
                 className="w-full justify-start gap-3 h-auto py-2"
               >
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <User className="h-4 w-4 text-primary" />
-                </div>
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={profile?.avatar_url || undefined} alt="Avatar" />
+                  <AvatarFallback className="bg-primary/10 text-primary text-sm">
+                    {getInitials()}
+                  </AvatarFallback>
+                </Avatar>
                 <div className="text-left overflow-hidden">
                   <p className="text-sm font-medium truncate">
                     {profile?.first_name} {profile?.last_name}

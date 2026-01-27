@@ -1,13 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { User, LogOut, Building2, Mail, Save, Loader2 } from "lucide-react";
+import { User, LogOut, Building2, Mail, Save, Loader2, Upload, Camera } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -21,10 +22,12 @@ const profileSchema = z.object({
 export default function Profile() {
   const { profile, loading, signOut, refreshProfile } = useAuth();
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [firstName, setFirstName] = useState(profile?.first_name || "");
   const [lastName, setLastName] = useState(profile?.last_name || "");
   const [saving, setSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [errors, setErrors] = useState<{ firstName?: string; lastName?: string }>({});
 
   // Redirect admin users to their specific profile pages
@@ -91,9 +94,92 @@ export default function Profile() {
     }
   };
 
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !profile?.id) return;
+
+    // Validate file type
+    if (!file.type.match(/^image\/(png|jpeg|jpg)$/)) {
+      toast.error("Formato non supportato. Usa PNG o JPG.");
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Immagine troppo grande. Massimo 2MB.");
+      return;
+    }
+
+    // Validate dimensions
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    
+    img.onload = async () => {
+      URL.revokeObjectURL(objectUrl);
+      
+      if (img.width > 320 || img.height > 320) {
+        toast.error("Dimensioni massime: 320x320 pixel");
+        return;
+      }
+
+      setUploadingAvatar(true);
+      try {
+        const fileExt = file.name.split('.').pop();
+        const filePath = `${profile.id}/avatar.${fileExt}`;
+
+        // Delete old avatar if exists
+        await supabase.storage
+          .from('profile-avatars')
+          .remove([`${profile.id}/avatar.png`, `${profile.id}/avatar.jpg`, `${profile.id}/avatar.jpeg`]);
+
+        // Upload new avatar
+        const { error: uploadError } = await supabase.storage
+          .from('profile-avatars')
+          .upload(filePath, file, { upsert: true });
+
+        if (uploadError) throw uploadError;
+
+        // Get public URL
+        const { data: urlData } = supabase.storage
+          .from('profile-avatars')
+          .getPublicUrl(filePath);
+
+        // Update profile with avatar URL (with cache buster)
+        const avatarUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ avatar_url: avatarUrl })
+          .eq('id', profile.id);
+
+        if (updateError) throw updateError;
+
+        await refreshProfile();
+        toast.success("Immagine profilo aggiornata!");
+      } catch (error) {
+        console.error("Error uploading avatar:", error);
+        toast.error("Errore durante il caricamento dell'immagine");
+      } finally {
+        setUploadingAvatar(false);
+      }
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      toast.error("Impossibile leggere l'immagine");
+    };
+
+    img.src = objectUrl;
+  };
+
   const handleSignOut = async () => {
     await signOut();
     navigate("/login");
+  };
+
+  const getInitials = () => {
+    const first = profile?.first_name?.[0] || "";
+    const last = profile?.last_name?.[0] || "";
+    return (first + last).toUpperCase() || "U";
   };
 
   return (
@@ -127,16 +213,42 @@ export default function Profile() {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                  <User className="h-8 w-8 text-primary" />
+                <div className="relative group">
+                  <Avatar className="h-16 w-16">
+                    <AvatarImage src={profile?.avatar_url || undefined} alt="Avatar" />
+                    <AvatarFallback className="bg-primary/10 text-primary text-lg font-medium">
+                      {getInitials()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingAvatar}
+                    className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                  >
+                    {uploadingAvatar ? (
+                      <Loader2 className="h-5 w-5 text-white animate-spin" />
+                    ) : (
+                      <Camera className="h-5 w-5 text-white" />
+                    )}
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/jpg"
+                    onChange={handleAvatarUpload}
+                    className="hidden"
+                  />
                 </div>
-                <div>
+                <div className="flex-1">
                   <p className="text-lg font-semibold text-foreground">
                     {profile?.first_name} {profile?.last_name}
                   </p>
                   <p className="text-sm text-muted-foreground">{profile?.email}</p>
                 </div>
               </div>
+              <p className="text-xs text-muted-foreground mt-3">
+                Clicca sull'immagine per cambiarla (max 320x320px, PNG o JPG)
+              </p>
             </CardContent>
           </Card>
         </motion.div>

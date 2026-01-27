@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { LogOut, Search, Calendar, Sprout, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { BottomNavigation } from "./BottomNavigation";
@@ -116,7 +117,12 @@ export function AppLayout({ children }: AppLayoutProps) {
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
               >
-                <User className="h-4 w-4" />
+                <Avatar className="h-6 w-6">
+                  <AvatarImage src={profile?.avatar_url || undefined} alt="Avatar" />
+                  <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                    {(profile?.first_name?.[0] || "") + (profile?.last_name?.[0] || "") || "U"}
+                  </AvatarFallback>
+                </Avatar>
                 <span className="hidden lg:inline">Profilo</span>
               </Link>
             </nav>

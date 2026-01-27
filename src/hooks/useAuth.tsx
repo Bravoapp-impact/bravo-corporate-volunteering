@@ -11,6 +11,7 @@ interface Profile {
   role: string;
   company_id: string | null;
   association_id: string | null;
+  avatar_url: string | null;
   created_at: string;
   companies?: {
     id: string;
