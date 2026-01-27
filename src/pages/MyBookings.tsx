@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Calendar, Loader2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Calendar, Loader2, ChevronDown } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { BookingCard } from "@/components/bookings/BookingCard";
 import { BookingDetailModal } from "@/components/bookings/BookingDetailModal";
@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { isPast } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface Booking {
   id: string;
@@ -37,6 +38,7 @@ export default function MyBookings() {
   const [loading, setLoading] = useState(true);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [historyExpanded, setHistoryExpanded] = useState(false);
 
   const fetchBookings = async () => {
     if (!user) return;
@@ -176,32 +178,56 @@ export default function MyBookings() {
             </section>
           )}
 
-          {/* Past bookings */}
+          {/* Past bookings - Collapsible */}
           {pastBookings.length > 0 && (
             <section>
-              <motion.h2
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 }}
-                className="text-lg font-medium text-muted-foreground mb-4"
+              <button
+                onClick={() => setHistoryExpanded(!historyExpanded)}
+                className="w-full flex items-center justify-between py-2 group"
               >
-                Storico
-                <span className="text-sm font-normal ml-2">
-                  ({pastBookings.length})
-                </span>
-              </motion.h2>
-              <div className="space-y-3">
-                {pastBookings.map((booking, index) => (
-                  <BookingCard
-                    key={booking.id}
-                    booking={booking}
-                    index={index}
-                    isPast
-                    onCancel={handleCancel}
-                    onView={setSelectedBooking}
-                  />
-                ))}
-              </div>
+                <motion.h2
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="text-lg font-medium text-muted-foreground flex items-center gap-2"
+                >
+                  Storico
+                  <span className="text-sm font-normal">
+                    ({pastBookings.length})
+                  </span>
+                </motion.h2>
+                <ChevronDown 
+                  className={cn(
+                    "h-5 w-5 text-muted-foreground transition-transform duration-200",
+                    historyExpanded && "rotate-180"
+                  )} 
+                />
+              </button>
+              
+              <AnimatePresence initial={false}>
+                {historyExpanded && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="space-y-3 pt-4">
+                      {pastBookings.map((booking, index) => (
+                        <BookingCard
+                          key={booking.id}
+                          booking={booking}
+                          index={index}
+                          isPast
+                          onCancel={handleCancel}
+                          onView={setSelectedBooking}
+                        />
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </section>
           )}
         </div>
