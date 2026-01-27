@@ -637,6 +637,422 @@ import { ProfileEditForm } from "@/components/profile/ProfileEditForm";
 
 ---
 
+## 📋 CRUD Table Pattern
+
+Un pattern completo per pagine CRUD (Create, Read, Update, Delete) che riduce il boilerplate di ~150-200 righe per pagina mantenendo flessibilità per casi complessi.
+
+**Path:** `src/components/crud/` e `src/hooks/useCrudState.ts`
+
+---
+
+### useCrudState Hook
+
+Hook generico per centralizzare stato e operazioni CRUD con Supabase.
+
+```tsx
+import { useCrudState } from "@/hooks/useCrudState";
+
+interface City {
+  id: string;
+  name: string;
+  province: string | null;
+  region: string | null;
+  created_at: string;
+}
+
+const {
+  items,           // T[] - tutti gli elementi
+  filteredItems,   // T[] - elementi filtrati dalla ricerca
+  loading,         // boolean - stato caricamento
+  saving,          // boolean - stato salvataggio
+  searchTerm,      // string - termine di ricerca
+  setSearchTerm,   // (v: string) => void
+  selectedItem,    // T | null - elemento selezionato per edit/delete
+  setSelectedItem, // (item: T | null) => void
+  dialogOpen,      // boolean - dialog create/edit aperto
+  setDialogOpen,   // (open: boolean) => void
+  deleteDialogOpen,// boolean - dialog delete aperto
+  setDeleteDialogOpen, // (open: boolean) => void
+  fetchItems,      // () => Promise<void> - ricarica manuale
+  handleSave,      // (payload, onSuccess?) => Promise<boolean>
+  handleDelete,    // (onSuccess?) => Promise<boolean>
+} = useCrudState<City>({
+  tableName: "cities",
+  orderBy: { column: "name", ascending: true },
+  searchFields: ["name", "province", "region"],
+  fetchOnMount: true, // default: true
+  idField: "id",      // default: "id"
+});
+```
+
+**Opzioni:**
+| Opzione | Tipo | Obbligatorio | Default | Descrizione |
+|---------|------|--------------|---------|-------------|
+| `tableName` | `string` | ✅ | - | Nome tabella Supabase |
+| `orderBy` | `{ column, ascending? }` | ❌ | - | Ordinamento risultati |
+| `searchFields` | `(keyof T)[]` | ❌ | `[]` | Campi per filtro ricerca |
+| `fetchOnMount` | `boolean` | ❌ | `true` | Carica dati al mount |
+| `idField` | `keyof T` | ❌ | `"id"` | Campo identificativo |
+
+---
+
+### CrudTableCard
+
+Card wrapper con header, conteggio, search e slot per filtri/azioni.
+
+```tsx
+import { CrudTableCard } from "@/components/crud";
+
+<CrudTableCard
+  title={`${cities.length} Città`}
+  searchValue={searchTerm}
+  onSearchChange={setSearchTerm}
+  searchPlaceholder="Cerca città..."
+  filters={<SelectFilter />}  // slot opzionale
+  actions={<ExportButton />}  // slot opzionale
+>
+  <Table>...</Table>
+</CrudTableCard>
+```
+
+**Props:**
+| Prop | Tipo | Obbligatorio | Descrizione |
+|------|------|--------------|-------------|
+| `title` | `string` | ✅ | Titolo con conteggio (es. "12 Città") |
+| `searchValue` | `string` | ✅ | Valore corrente della ricerca |
+| `onSearchChange` | `(v: string) => void` | ✅ | Handler cambio ricerca |
+| `searchPlaceholder` | `string` | ❌ | Placeholder input ricerca |
+| `filters` | `ReactNode` | ❌ | Slot per filtri aggiuntivi |
+| `actions` | `ReactNode` | ❌ | Slot per azioni header |
+| `children` | `ReactNode` | ✅ | Contenuto (Table) |
+| `className` | `string` | ❌ | Classi CSS aggiuntive |
+
+---
+
+### CrudTableRow
+
+Wrapper per righe tabella con animazione Framer Motion.
+
+```tsx
+import { CrudTableRow } from "@/components/crud";
+
+{filteredItems.map((city, index) => (
+  <CrudTableRow key={city.id} index={index}>
+    <TableCell>{city.name}</TableCell>
+    <TableCell>{city.province}</TableCell>
+    <TableCell>
+      <CrudTableActions ... />
+    </TableCell>
+  </CrudTableRow>
+))}
+```
+
+**Props:**
+| Prop | Tipo | Obbligatorio | Descrizione |
+|------|------|--------------|-------------|
+| `index` | `number` | ✅ | Indice per calcolo delay animazione |
+| `children` | `ReactNode` | ✅ | Celle della riga |
+| `className` | `string` | ❌ | Classi CSS aggiuntive |
+
+---
+
+### CrudTableActions
+
+Bottoni Edit/Delete standardizzati per celle azioni.
+
+```tsx
+import { CrudTableActions } from "@/components/crud";
+
+<CrudTableActions
+  onEdit={() => handleOpenDialog(city)}
+  onDelete={() => {
+    setSelectedItem(city);
+    setDeleteDialogOpen(true);
+  }}
+  showEdit={true}    // default: true
+  showDelete={true}  // default: true
+/>
+```
+
+**Props:**
+| Prop | Tipo | Obbligatorio | Default | Descrizione |
+|------|------|--------------|---------|-------------|
+| `onEdit` | `() => void` | ❌ | - | Handler click Edit |
+| `onDelete` | `() => void` | ❌ | - | Handler click Delete |
+| `showEdit` | `boolean` | ❌ | `true` | Mostra bottone Edit |
+| `showDelete` | `boolean` | ❌ | `true` | Mostra bottone Delete |
+| `size` | `"sm" \| "default"` | ❌ | `"sm"` | Dimensione bottoni |
+| `className` | `string` | ❌ | - | Classi CSS aggiuntive |
+
+---
+
+### DeleteConfirmDialog
+
+Dialog di conferma eliminazione universale.
+
+```tsx
+import { DeleteConfirmDialog } from "@/components/crud";
+
+<DeleteConfirmDialog
+  open={deleteDialogOpen}
+  onOpenChange={setDeleteDialogOpen}
+  onConfirm={handleDelete}
+  entityName="città"
+  entityLabel={selectedItem?.name}
+  isLoading={saving}
+/>
+```
+
+**Props:**
+| Prop | Tipo | Obbligatorio | Default | Descrizione |
+|------|------|--------------|---------|-------------|
+| `open` | `boolean` | ✅ | - | Stato apertura dialog |
+| `onOpenChange` | `(open: boolean) => void` | ✅ | - | Handler cambio stato |
+| `onConfirm` | `() => void` | ✅ | - | Handler conferma eliminazione |
+| `entityName` | `string` | ❌ | `"elemento"` | Nome tipo entità (es. "città") |
+| `entityLabel` | `string` | ❌ | - | Nome specifico (es. "Milano") |
+| `title` | `string` | ❌ | Auto-generato | Titolo dialog |
+| `description` | `string` | ❌ | Auto-generato | Descrizione dialog |
+| `confirmLabel` | `string` | ❌ | `"Elimina"` | Testo bottone conferma |
+| `cancelLabel` | `string` | ❌ | `"Annulla"` | Testo bottone annulla |
+| `isLoading` | `boolean` | ❌ | `false` | Stato caricamento |
+
+---
+
+### TableLoadingRow & TableEmptyRow
+
+Stati loading e empty specifici per tabelle.
+
+```tsx
+import { TableLoadingRow, TableEmptyRow } from "@/components/crud";
+
+<TableBody>
+  {loading ? (
+    <TableLoadingRow colSpan={4} message="Caricamento..." />
+  ) : filteredItems.length === 0 ? (
+    <TableEmptyRow
+      colSpan={4}
+      icon={MapPin}
+      message="Nessuna città trovata"
+    />
+  ) : (
+    filteredItems.map(...)
+  )}
+</TableBody>
+```
+
+**TableLoadingRow Props:**
+| Prop | Tipo | Obbligatorio | Default | Descrizione |
+|------|------|--------------|---------|-------------|
+| `colSpan` | `number` | ✅ | - | Numero colonne tabella |
+| `message` | `string` | ❌ | `"Caricamento..."` | Messaggio loading |
+
+**TableEmptyRow Props:**
+| Prop | Tipo | Obbligatorio | Default | Descrizione |
+|------|------|--------------|---------|-------------|
+| `colSpan` | `number` | ✅ | - | Numero colonne tabella |
+| `icon` | `LucideIcon` | ❌ | - | Icona Lucide |
+| `message` | `string` | ❌ | `"Nessun elemento trovato"` | Messaggio empty |
+| `description` | `string` | ❌ | - | Descrizione aggiuntiva |
+
+---
+
+### CrudSearchBar
+
+Barra ricerca standalone con icona.
+
+```tsx
+import { CrudSearchBar } from "@/components/crud";
+
+<CrudSearchBar
+  value={searchTerm}
+  onChange={setSearchTerm}
+  placeholder="Cerca..."
+  className="max-w-sm"
+/>
+```
+
+---
+
+### Esempio Completo: CitiesPage
+
+```tsx
+import { useState } from "react";
+import { Plus, MapPin } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { SuperAdminLayout } from "@/components/layout/SuperAdminLayout";
+import { PageHeader } from "@/components/common/PageHeader";
+import {
+  CrudTableCard,
+  CrudTableActions,
+  CrudTableRow,
+  TableEmptyRow,
+  TableLoadingRow,
+  DeleteConfirmDialog,
+} from "@/components/crud";
+import { useCrudState } from "@/hooks/useCrudState";
+
+interface City {
+  id: string;
+  name: string;
+  province: string | null;
+  region: string | null;
+  created_at: string;
+}
+
+export default function CitiesPage() {
+  const {
+    items: cities,
+    loading,
+    searchTerm,
+    setSearchTerm,
+    selectedItem,
+    setSelectedItem,
+    dialogOpen,
+    setDialogOpen,
+    deleteDialogOpen,
+    setDeleteDialogOpen,
+    saving,
+    handleSave,
+    handleDelete,
+    filteredItems,
+  } = useCrudState<City>({
+    tableName: "cities",
+    orderBy: { column: "name", ascending: true },
+    searchFields: ["name", "province", "region"],
+  });
+
+  const [formData, setFormData] = useState({ name: "", province: "", region: "" });
+
+  const handleOpenDialog = (city?: City) => {
+    if (city) {
+      setSelectedItem(city);
+      setFormData({ name: city.name, province: city.province || "", region: city.region || "" });
+    } else {
+      setSelectedItem(null);
+      setFormData({ name: "", province: "", region: "" });
+    }
+    setDialogOpen(true);
+  };
+
+  const handleSubmit = async () => {
+    await handleSave({
+      name: formData.name.trim(),
+      province: formData.province.trim() || null,
+      region: formData.region.trim() || null,
+    });
+  };
+
+  return (
+    <SuperAdminLayout>
+      <div className="space-y-6">
+        <PageHeader
+          title="Città"
+          description="Gestisci le città dove operiamo"
+          actions={
+            <Button onClick={() => handleOpenDialog()} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Nuova Città
+            </Button>
+          }
+        />
+
+        <CrudTableCard
+          title={`${cities.length} Città`}
+          searchValue={searchTerm}
+          onSearchChange={setSearchTerm}
+          searchPlaceholder="Cerca città..."
+        >
+          <Table>
+            <TableHeader>
+              <tr className="bg-muted/50">
+                <TableHead>Città</TableHead>
+                <TableHead>Provincia</TableHead>
+                <TableHead>Regione</TableHead>
+                <TableHead className="w-24">Azioni</TableHead>
+              </tr>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableLoadingRow colSpan={4} />
+              ) : filteredItems.length === 0 ? (
+                <TableEmptyRow colSpan={4} icon={MapPin} message="Nessuna città trovata" />
+              ) : (
+                filteredItems.map((city, index) => (
+                  <CrudTableRow key={city.id} index={index}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <MapPin className="h-5 w-5 text-primary" />
+                        </div>
+                        <span className="font-medium">{city.name}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>{city.province || "—"}</TableCell>
+                    <TableCell>{city.region || "—"}</TableCell>
+                    <TableCell>
+                      <CrudTableActions
+                        onEdit={() => handleOpenDialog(city)}
+                        onDelete={() => {
+                          setSelectedItem(city);
+                          setDeleteDialogOpen(true);
+                        }}
+                      />
+                    </TableCell>
+                  </CrudTableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </CrudTableCard>
+      </div>
+
+      {/* Dialog form - resta custom per massima flessibilità */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{selectedItem ? "Modifica Città" : "Nuova Città"}</DialogTitle>
+          </DialogHeader>
+          {/* Form fields... */}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Annulla</Button>
+            <Button onClick={handleSubmit} disabled={saving}>
+              {saving ? "Salvataggio..." : "Salva"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <DeleteConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={handleDelete}
+        entityName="città"
+        entityLabel={selectedItem?.name}
+        isLoading={saving}
+      />
+    </SuperAdminLayout>
+  );
+}
+```
+
+---
+
+### Pagine Refactorate con CRUD Pattern
+
+| Pagina | Hook | Componenti UI | Note |
+|--------|------|---------------|------|
+| `CitiesPage` | ✅ `useCrudState` | ✅ Tutti | Refactoring completo |
+| `CategoriesPage` | ✅ `useCrudState` | ✅ Tutti | Refactoring completo |
+| `CompaniesPage` | ❌ Custom | ✅ UI only | Logica custom per logo upload |
+| `AssociationsPage` | ❌ Custom | ✅ UI only | Logica custom per multi-città |
+| `UsersPage` | ❌ Custom | ✅ UI only | Logica custom per ruoli/tenant |
+| `AccessCodesPage` | ❌ Custom | ❌ Nessuno | Troppo custom |
+
+---
+
 ## 🔄 Quando Usare i Componenti Riutilizzabili
 
 | Situazione | Componente da usare |
@@ -646,6 +1062,8 @@ import { ProfileEditForm } from "@/components/profile/ProfileEditForm";
 | Stato di caricamento dati | `LoadingState` |
 | Lista/tabella vuota | `EmptyState` |
 | Form modifica profilo | `ProfileEditForm` |
+| Pagina CRUD semplice | `useCrudState` + componenti CRUD |
+| Pagina CRUD complessa | Solo componenti UI CRUD |
 
 **Vantaggi:**
 - ✅ Consistenza visiva garantita
@@ -662,4 +1080,6 @@ import { ProfileEditForm } from "@/components/profile/ProfileEditForm";
 - **CSS Variables**: `src/index.css`
 - **UI Components (shadcn)**: `src/components/ui/`
 - **Componenti Riutilizzabili**: `src/components/common/`, `src/components/profile/`
+- **Componenti CRUD**: `src/components/crud/`
+- **Hook CRUD**: `src/hooks/useCrudState.ts`
 - **Layout Admin**: `src/components/layout/AdminLayout.tsx`
