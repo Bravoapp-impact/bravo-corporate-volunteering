@@ -183,25 +183,25 @@ export default function MyBookings() {
             <section>
               <button
                 onClick={() => setHistoryExpanded(!historyExpanded)}
-                className="w-full flex items-center justify-between py-2 group"
+                className="flex items-center gap-2 py-2 group"
               >
                 <motion.h2
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.2 }}
-                  className="text-lg font-medium text-muted-foreground flex items-center gap-2"
+                  className="text-lg font-medium text-muted-foreground"
                 >
                   Storico
-                  <span className="text-sm font-normal">
-                    ({pastBookings.length})
-                  </span>
                 </motion.h2>
                 <ChevronDown 
                   className={cn(
-                    "h-5 w-5 text-muted-foreground transition-transform duration-200",
+                    "h-4 w-4 text-muted-foreground transition-transform duration-200",
                     historyExpanded && "rotate-180"
                   )} 
                 />
+                <span className="text-sm text-muted-foreground">
+                  ({pastBookings.length})
+                </span>
               </button>
               
               <AnimatePresence initial={false}>
