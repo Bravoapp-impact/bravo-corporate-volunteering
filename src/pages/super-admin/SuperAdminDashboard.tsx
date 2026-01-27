@@ -12,6 +12,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SuperAdminLayout } from "@/components/layout/SuperAdminLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { devLog } from "@/lib/logger";
+import { PageHeader } from "@/components/common/PageHeader";
+import { LoadingState } from "@/components/common/LoadingState";
+import { MetricCard } from "@/components/common/MetricCard";
 
 interface DashboardStats {
   totalCompanies: number;
@@ -146,51 +149,25 @@ export default function SuperAdminDashboard() {
   return (
     <SuperAdminLayout>
       <div className="space-y-6">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground mt-1 text-sm sm:text-base">
-            Panoramica globale della piattaforma Bravo!
-          </p>
-        </motion.div>
+        <PageHeader
+          title="Dashboard"
+          description="Panoramica globale della piattaforma Bravo!"
+        />
 
         {/* Stats Grid */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {statCards.map((stat, index) => {
-            const Icon = stat.icon;
-            return (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <Card className="border-border/50 bg-card/80 backdrop-blur-sm hover:shadow-md transition-shadow">
-                  <CardContent className="p-4 sm:p-6">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">
-                          {stat.label}
-                        </p>
-                        <p className="text-2xl sm:text-3xl font-bold mt-2">{stat.value}</p>
-                        {stat.subLabel && (
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {stat.subLabel}
-                          </p>
-                        )}
-                      </div>
-                      <div className={`p-2.5 sm:p-3 rounded-xl ${stat.bgColor}`}>
-                        <Icon className={`h-5 w-5 sm:h-6 sm:w-6 ${stat.color}`} />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            );
-          })}
+          {statCards.map((stat, index) => (
+            <MetricCard
+              key={stat.label}
+              label={stat.label}
+              value={stat.value}
+              icon={stat.icon}
+              iconColor={stat.color}
+              iconBgColor={stat.bgColor}
+              subLabel={stat.subLabel}
+              animationDelay={index * 0.1}
+            />
+          ))}
         </div>
 
         {/* Quick Actions */}

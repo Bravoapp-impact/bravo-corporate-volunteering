@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
 import { HRLayout } from "@/components/layout/HRLayout";
 import { MetricsCards } from "@/components/hr/MetricsCards";
 import { SDGImpactGrid } from "@/components/hr/SDGImpactGrid";
 import { UpcomingEvents } from "@/components/hr/UpcomingEvents";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
 import { devLog } from "@/lib/logger";
+import { PageHeader } from "@/components/common/PageHeader";
+import { LoadingState } from "@/components/common/LoadingState";
 
 interface DashboardData {
   employeesCount: number;
@@ -188,12 +188,7 @@ export default function HRDashboard() {
   if (loading) {
     return (
       <HRLayout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="flex flex-col items-center gap-4">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-muted-foreground">Caricamento dashboard...</p>
-          </div>
-        </div>
+        <LoadingState message="Caricamento dashboard..." />
       </HRLayout>
     );
   }
@@ -201,16 +196,10 @@ export default function HRDashboard() {
   return (
     <HRLayout>
       <div className="space-y-6">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Dashboard</h1>
-          <p className="text-muted-foreground mt-1 text-sm sm:text-base">
-            Panoramica dell'impatto sociale della tua azienda
-          </p>
-        </motion.div>
+        <PageHeader
+          title="Dashboard"
+          description="Panoramica dell'impatto sociale della tua azienda"
+        />
 
         {/* Metrics Cards - 5 cards */}
         <MetricsCards

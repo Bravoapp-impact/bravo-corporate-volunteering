@@ -3,12 +3,15 @@ import { motion } from "framer-motion";
 import { AssociationLayout } from "@/components/layout/AssociationLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Calendar, Users, CalendarX } from "lucide-react";
+import { Calendar, Users, CalendarX } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { devLog } from "@/lib/logger";
+import { PageHeader } from "@/components/common/PageHeader";
+import { LoadingState } from "@/components/common/LoadingState";
+import { EmptyState } from "@/components/common/EmptyState";
 
 interface UpcomingDate {
   id: string;
@@ -100,12 +103,7 @@ export default function AssociationDashboard() {
   if (loading) {
     return (
       <AssociationLayout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="flex flex-col items-center gap-4">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-muted-foreground">Caricamento dashboard...</p>
-          </div>
-        </div>
+        <LoadingState message="Caricamento dashboard..." />
       </AssociationLayout>
     );
   }
@@ -113,16 +111,10 @@ export default function AssociationDashboard() {
   return (
     <AssociationLayout>
       <div className="space-y-6">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Dashboard</h1>
-          <p className="text-muted-foreground mt-1 text-sm sm:text-base">
-            Panoramica delle prossime attività di volontariato
-          </p>
-        </motion.div>
+        <PageHeader
+          title="Dashboard"
+          description="Panoramica delle prossime attività di volontariato"
+        />
 
         {/* Upcoming Dates Section */}
         <motion.div
@@ -139,15 +131,11 @@ export default function AssociationDashboard() {
             </CardHeader>
             <CardContent>
               {upcomingDates.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <CalendarX className="h-12 w-12 text-muted-foreground/50 mb-4" />
-                  <h3 className="text-lg font-medium text-foreground mb-1">
-                    Nessuna data in programma
-                  </h3>
-                  <p className="text-sm text-muted-foreground max-w-sm">
-                    Al momento non ci sono attività future programmate per la tua associazione.
-                  </p>
-                </div>
+                <EmptyState
+                  icon={CalendarX}
+                  title="Nessuna data in programma"
+                  description="Al momento non ci sono attività future programmate per la tua associazione."
+                />
               ) : (
                 <div className="space-y-4">
                   {upcomingDates.map((date, index) => (
