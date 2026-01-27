@@ -1,14 +1,14 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { User, LogOut, Mail, Save, Loader2, Camera, Heart } from "lucide-react";
+import { LogOut, Mail, Save, Loader2, Heart } from "lucide-react";
 import { AssociationLayout } from "@/components/layout/AssociationLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ProfileAvatarUpload } from "@/components/profile/ProfileAvatarUpload";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -22,12 +22,10 @@ const profileSchema = z.object({
 export default function AssociationAdminProfile() {
   const { profile, signOut, refreshProfile } = useAuth();
   const navigate = useNavigate();
-  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [firstName, setFirstName] = useState(profile?.first_name || "");
   const [lastName, setLastName] = useState(profile?.last_name || "");
   const [saving, setSaving] = useState(false);
-  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [errors, setErrors] = useState<{ firstName?: string; lastName?: string }>({});
 
   const hasChanges = 
@@ -70,84 +68,9 @@ export default function AssociationAdminProfile() {
     }
   };
 
-  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file || !profile?.id) return;
-
-    if (!file.type.match(/^image\/(png|jpeg|jpg)$/)) {
-      toast.error("Formato non supportato. Usa PNG o JPG.");
-      return;
-    }
-
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error("Immagine troppo grande. Massimo 2MB.");
-      return;
-    }
-
-    const img = new Image();
-    const objectUrl = URL.createObjectURL(file);
-    
-    img.onload = async () => {
-      URL.revokeObjectURL(objectUrl);
-      
-      if (img.width > 320 || img.height > 320) {
-        toast.error("Dimensioni massime: 320x320 pixel");
-        return;
-      }
-
-      setUploadingAvatar(true);
-      try {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${profile.id}/avatar.${fileExt}`;
-
-        await supabase.storage
-          .from("profile-avatars")
-          .remove([`${profile.id}/avatar.png`, `${profile.id}/avatar.jpg`, `${profile.id}/avatar.jpeg`]);
-
-        const { error: uploadError } = await supabase.storage
-          .from("profile-avatars")
-          .upload(fileName, file, { upsert: true });
-
-        if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from("profile-avatars")
-          .getPublicUrl(fileName);
-
-        const { error: updateError } = await supabase
-          .from("profiles")
-          .update({ avatar_url: publicUrl })
-          .eq("id", profile.id);
-
-        if (updateError) throw updateError;
-
-        await refreshProfile();
-        toast.success("Immagine profilo aggiornata!");
-      } catch (error) {
-        console.error("Error uploading avatar:", error);
-        toast.error("Errore durante il caricamento dell'immagine");
-      } finally {
-        setUploadingAvatar(false);
-      }
-    };
-
-    img.onerror = () => {
-      URL.revokeObjectURL(objectUrl);
-      toast.error("Impossibile leggere l'immagine");
-    };
-
-    img.src = objectUrl;
-  };
-
   const handleSignOut = async () => {
     await signOut();
     navigate("/login");
-  };
-
-  const getInitials = () => {
-    const first = profile?.first_name?.charAt(0) || "";
-    const last = profile?.last_name?.charAt(0) || "";
-    return (first + last).toUpperCase() || "U";
   };
 
   return (
@@ -175,32 +98,15 @@ export default function AssociationAdminProfile() {
           <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
             <CardContent className="p-6">
               <div className="flex items-center gap-4">
-                <div className="relative group">
-                  <Avatar className="w-16 h-16">
-                    <AvatarImage src={(profile as any)?.avatar_url} alt="Avatar" />
-                    <AvatarFallback className="bg-primary/10 text-primary text-lg">
-                      {getInitials()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploadingAvatar}
-                    className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                  >
-                    {uploadingAvatar ? (
-                      <Loader2 className="h-5 w-5 text-white animate-spin" />
-                    ) : (
-                      <Camera className="h-5 w-5 text-white" />
-                    )}
-                  </button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/png,image/jpeg,image/jpg"
-                    onChange={handleAvatarUpload}
-                    className="hidden"
+                {profile?.id && (
+                  <ProfileAvatarUpload
+                    userId={profile.id}
+                    avatarUrl={profile.avatar_url}
+                    firstName={profile.first_name}
+                    lastName={profile.last_name}
+                    onUploadComplete={refreshProfile}
                   />
-                </div>
+                )}
                 <div>
                   <p className="text-lg font-semibold text-foreground">
                     {profile?.first_name} {profile?.last_name}
@@ -209,6 +115,9 @@ export default function AssociationAdminProfile() {
                   <p className="text-xs text-primary mt-1">Referente Associazione</p>
                 </div>
               </div>
+              <p className="text-xs text-muted-foreground mt-3">
+                Clicca sull'immagine per cambiarla (max 2MB, PNG o JPG)
+              </p>
             </CardContent>
           </Card>
         </motion.div>
