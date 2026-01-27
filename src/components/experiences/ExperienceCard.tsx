@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { MapPin, Users, Calendar, Clock, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { BaseCardImage } from "@/components/common/BaseCardImage";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 
@@ -45,29 +46,24 @@ export function ExperienceCard({ experience, index, onSelect }: ExperienceCardPr
       className="group relative bg-card rounded-2xl overflow-hidden border border-border transition-all duration-300 hover:shadow-md"
     >
       {/* Image */}
-      <div className="relative h-48 overflow-hidden">
-        {experience.image_url ? (
-          <img
-            src={experience.image_url}
-            alt={experience.title}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-          />
-        ) : (
-          <div className="w-full h-full bg-muted flex items-center justify-center">
-            <span className="text-5xl">🤝</span>
-          </div>
-        )}
-        
-        {/* Category badge */}
-        {experience.category && (
-          <Badge
-            variant="secondary"
-            className="absolute top-4 left-4 bg-background/90 backdrop-blur-sm"
-          >
-            {experience.category}
-          </Badge>
-        )}
-      </div>
+      <BaseCardImage
+        imageUrl={experience.image_url}
+        alt={experience.title}
+        aspectRatio="video"
+        fallbackEmoji="🤝"
+        badge={
+          experience.category ? (
+            <Badge
+              variant="secondary"
+              className="bg-background/90 backdrop-blur-sm"
+            >
+              {experience.category}
+            </Badge>
+          ) : null
+        }
+        badgePosition="top-left"
+        className="rounded-none"
+      />
 
       {/* Content */}
       <div className="p-6 space-y-4">

@@ -18,8 +18,8 @@
 | `BookingDetailModal` | ✅ | ✅ | Completato |
 | `ExperienceCardCompact` | ✅ | - | Completato |
 | `ExperienceDetailModal` | ✅ | ✅ | Completato |
-| `ExperienceCard` | ❌ | - | Da fare |
-| `HRExperienceCard` | ❌ | - | Da fare |
+| `ExperienceCard` | ✅ | - | Completato |
+| `HRExperienceCard` | ✅ | - | Completato |
 
 ### Linee di Codice Risparmiate
 
