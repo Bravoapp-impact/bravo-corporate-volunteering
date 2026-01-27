@@ -14,8 +14,8 @@ import {
 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { BaseCardImage } from "@/components/common/BaseCardImage";
 import { cn } from "@/lib/utils";
 import { SDG_DATA } from "@/lib/sdg-data";
 import { HRBookingsDialog } from "./HRBookingsDialog";
@@ -69,16 +69,17 @@ export function HRExperienceCard({ experience }: HRExperienceCardProps) {
         <CardHeader className="p-0">
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="w-full text-left p-4 sm:p-6 hover:bg-muted/30 transition-colors"
+            className="w-full text-left p-4 sm:p-6 hover:bg-muted/30 transition-colors group"
           >
             <div className="flex items-start gap-4">
-              {/* Image thumbnail */}
+              {/* Image thumbnail using BaseCardImage */}
               {experience.image_url && (
-                <div className="hidden sm:block w-20 h-20 rounded-lg overflow-hidden shrink-0 bg-muted">
-                  <img
-                    src={experience.image_url}
+                <div className="hidden sm:block w-20 h-20 shrink-0">
+                  <BaseCardImage
+                    imageUrl={experience.image_url}
                     alt={experience.title}
-                    className="w-full h-full object-cover"
+                    aspectRatio="square"
+                    className="w-20 h-20 rounded-lg"
                   />
                 </div>
               )}
@@ -168,13 +169,12 @@ export function HRExperienceCard({ experience }: HRExperienceCardProps) {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {experience.image_url && (
                       <div className="md:col-span-1">
-                        <div className="aspect-video rounded-lg overflow-hidden bg-muted">
-                          <img
-                            src={experience.image_url}
-                            alt={experience.title}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
+                        <BaseCardImage
+                          imageUrl={experience.image_url}
+                          alt={experience.title}
+                          aspectRatio="video"
+                          className="rounded-lg"
+                        />
                       </div>
                     )}
                     <div
@@ -245,7 +245,7 @@ export function HRExperienceCard({ experience }: HRExperienceCardProps) {
                               key={date.id}
                               onClick={() => setSelectedDate(date)}
                               className={cn(
-                                "text-left p-3 rounded-lg border border-border/50 hover:bg-muted/30 hover:shadow-sm transition-all group",
+                                "text-left p-3 rounded-lg border border-border/50 hover:bg-muted/30 hover:shadow-sm transition-all group/date",
                                 isPast && "opacity-60"
                               )}
                             >
@@ -269,7 +269,7 @@ export function HRExperienceCard({ experience }: HRExperienceCardProps) {
                                     </p>
                                   )}
                                 </div>
-                                <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0 mt-1" />
+                                <ChevronRight className="h-4 w-4 text-muted-foreground group-hover/date:text-primary transition-colors shrink-0 mt-1" />
                               </div>
 
                               {/* Fill rate bar */}
