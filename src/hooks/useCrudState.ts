@@ -28,7 +28,7 @@ interface UseCrudStateReturn<T> {
   filteredItems: T[];
 }
 
-export function useCrudState<T extends Record<string, unknown>>({
+export function useCrudState<T>({
   tableName,
   orderBy,
   searchFields = [],

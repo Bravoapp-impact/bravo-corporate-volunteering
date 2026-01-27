@@ -1,16 +1,12 @@
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { Plus, Search, Edit, Trash2, MapPin } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from "react";
+import { Plus, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
 } from "@/components/ui/table";
 import {
   Dialog,
@@ -19,21 +15,20 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { SuperAdminLayout } from "@/components/layout/SuperAdminLayout";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { devLog } from "@/lib/logger";
+import { PageHeader } from "@/components/common/PageHeader";
+import {
+  CrudTableCard,
+  CrudTableActions,
+  CrudTableRow,
+  TableEmptyRow,
+  TableLoadingRow,
+  DeleteConfirmDialog,
+} from "@/components/crud";
+import { useCrudState } from "@/hooks/useCrudState";
 
 interface City {
   id: string;
@@ -44,55 +39,44 @@ interface City {
 }
 
 export default function CitiesPage() {
-  const [cities, setCities] = useState<City[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedCity, setSelectedCity] = useState<City | null>(null);
+  const { toast } = useToast();
+  const {
+    items: cities,
+    loading,
+    searchTerm,
+    setSearchTerm,
+    selectedItem,
+    setSelectedItem,
+    dialogOpen,
+    setDialogOpen,
+    deleteDialogOpen,
+    setDeleteDialogOpen,
+    saving,
+    handleSave,
+    handleDelete,
+    filteredItems,
+  } = useCrudState<City>({
+    tableName: "cities",
+    orderBy: { column: "name", ascending: true },
+    searchFields: ["name", "province", "region"],
+  });
+
   const [formData, setFormData] = useState({
     name: "",
     province: "",
     region: "",
   });
-  const [saving, setSaving] = useState(false);
-  const { toast } = useToast();
-
-  useEffect(() => {
-    fetchCities();
-  }, []);
-
-  const fetchCities = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("cities")
-        .select("*")
-        .order("name", { ascending: true });
-
-      if (error) throw error;
-      setCities(data || []);
-    } catch (error) {
-      devLog.error("Error fetching cities:", error);
-      toast({
-        variant: "destructive",
-        title: "Errore",
-        description: "Impossibile caricare le città",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleOpenDialog = (city?: City) => {
     if (city) {
-      setSelectedCity(city);
+      setSelectedItem(city);
       setFormData({
         name: city.name,
         province: city.province || "",
         region: city.region || "",
       });
     } else {
-      setSelectedCity(null);
+      setSelectedItem(null);
       setFormData({
         name: "",
         province: "",
@@ -102,7 +86,7 @@ export default function CitiesPage() {
     setDialogOpen(true);
   };
 
-  const handleSave = async () => {
+  const handleSubmit = async () => {
     if (!formData.name.trim()) {
       toast({
         variant: "destructive",
@@ -112,213 +96,81 @@ export default function CitiesPage() {
       return;
     }
 
-    setSaving(true);
-    try {
-      const payload = {
-        name: formData.name.trim(),
-        province: formData.province.trim() || null,
-        region: formData.region.trim() || null,
-      };
-
-      if (selectedCity) {
-        const { error } = await supabase
-          .from("cities")
-          .update(payload)
-          .eq("id", selectedCity.id);
-
-        if (error) throw error;
-
-        toast({
-          title: "Successo",
-          description: "Città aggiornata",
-        });
-      } else {
-        const { error } = await supabase.from("cities").insert(payload);
-
-        if (error) throw error;
-
-        toast({
-          title: "Successo",
-          description: "Città creata",
-        });
-      }
-
-      setDialogOpen(false);
-      fetchCities();
-    } catch (error: any) {
-      devLog.error("Error saving city:", error);
-      toast({
-        variant: "destructive",
-        title: "Errore",
-        description: error.message?.includes("duplicate")
-          ? "Questa città esiste già"
-          : error.message || "Impossibile salvare la città",
-      });
-    } finally {
-      setSaving(false);
-    }
+    await handleSave({
+      name: formData.name.trim(),
+      province: formData.province.trim() || null,
+      region: formData.region.trim() || null,
+    });
   };
-
-  const handleDelete = async () => {
-    if (!selectedCity) return;
-
-    try {
-      const { error } = await supabase
-        .from("cities")
-        .delete()
-        .eq("id", selectedCity.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Successo",
-        description: "Città eliminata",
-      });
-
-      setDeleteDialogOpen(false);
-      setSelectedCity(null);
-      fetchCities();
-    } catch (error: any) {
-      devLog.error("Error deleting city:", error);
-      toast({
-        variant: "destructive",
-        title: "Errore",
-        description: error.message?.includes("violates foreign key")
-          ? "Impossibile eliminare: ci sono esperienze o associazioni collegate a questa città"
-          : error.message || "Impossibile eliminare la città",
-      });
-    }
-  };
-
-  const filteredCities = cities.filter((city) => {
-    return (
-      !searchTerm ||
-      city.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      city.province?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      city.region?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  });
 
   return (
     <SuperAdminLayout>
       <div className="space-y-6">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
-        >
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Città</h1>
-            <p className="text-muted-foreground">
-              Gestisci le città dove operiamo
-            </p>
-          </div>
-          <Button onClick={() => handleOpenDialog()} className="gap-2">
-            <Plus className="h-4 w-4" />
-            Nuova Città
-          </Button>
-        </motion.div>
+        <PageHeader
+          title="Città"
+          description="Gestisci le città dove operiamo"
+          actions={
+            <Button onClick={() => handleOpenDialog()} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Nuova Città
+            </Button>
+          }
+        />
 
-        {/* Table */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
+        <CrudTableCard
+          title={`${cities.length} Città`}
+          searchValue={searchTerm}
+          onSearchChange={setSearchTerm}
+          searchPlaceholder="Cerca città..."
         >
-          <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
-            <CardHeader>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <CardTitle className="text-lg">{cities.length} Città</CardTitle>
-                <div className="relative w-full sm:w-64">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Cerca..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
+          <div className="rounded-lg border border-border overflow-hidden">
+            <Table>
+              <TableHeader>
+                <tr className="bg-muted/50">
+                  <TableHead>Città</TableHead>
+                  <TableHead>Provincia</TableHead>
+                  <TableHead>Regione</TableHead>
+                  <TableHead className="w-24">Azioni</TableHead>
+                </tr>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  <TableLoadingRow colSpan={4} />
+                ) : filteredItems.length === 0 ? (
+                  <TableEmptyRow
+                    colSpan={4}
+                    icon={MapPin}
+                    message="Nessuna città trovata"
                   />
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="rounded-lg border border-border overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-muted/50">
-                      <TableHead>Città</TableHead>
-                      <TableHead>Provincia</TableHead>
-                      <TableHead>Regione</TableHead>
-                      <TableHead className="w-24">Azioni</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {loading ? (
-                      <TableRow>
-                        <TableCell colSpan={4} className="text-center py-8">
-                          Caricamento...
-                        </TableCell>
-                      </TableRow>
-                    ) : filteredCities.length === 0 ? (
-                      <TableRow>
-                        <TableCell
-                          colSpan={4}
-                          className="text-center py-8 text-muted-foreground"
-                        >
-                          Nessuna città trovata
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      filteredCities.map((city, index) => (
-                        <motion.tr
-                          key={city.id}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.02 }}
-                          className="border-b border-border"
-                        >
-                          <TableCell>
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                                <MapPin className="h-5 w-5 text-primary" />
-                              </div>
-                              <span className="font-medium">{city.name}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>{city.province || "—"}</TableCell>
-                          <TableCell>{city.region || "—"}</TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={() => handleOpenDialog(city)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-destructive hover:text-destructive"
-                                onClick={() => {
-                                  setSelectedCity(city);
-                                  setDeleteDialogOpen(true);
-                                }}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </motion.tr>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+                ) : (
+                  filteredItems.map((city, index) => (
+                    <CrudTableRow key={city.id} index={index}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                            <MapPin className="h-5 w-5 text-primary" />
+                          </div>
+                          <span className="font-medium">{city.name}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>{city.province || "—"}</TableCell>
+                      <TableCell>{city.region || "—"}</TableCell>
+                      <TableCell>
+                        <CrudTableActions
+                          onEdit={() => handleOpenDialog(city)}
+                          onDelete={() => {
+                            setSelectedItem(city);
+                            setDeleteDialogOpen(true);
+                          }}
+                        />
+                      </TableCell>
+                    </CrudTableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CrudTableCard>
       </div>
 
       {/* Create/Edit Dialog */}
@@ -326,7 +178,7 @@ export default function CitiesPage() {
         <DialogContent className="sm:max-w-[425px] bg-background">
           <DialogHeader>
             <DialogTitle>
-              {selectedCity ? "Modifica Città" : "Nuova Città"}
+              {selectedItem ? "Modifica Città" : "Nuova Città"}
             </DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -368,34 +220,21 @@ export default function CitiesPage() {
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Annulla
             </Button>
-            <Button onClick={handleSave} disabled={saving}>
+            <Button onClick={handleSubmit} disabled={saving}>
               {saving ? "Salvataggio..." : "Salva"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent className="bg-background">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Eliminare questa città?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Questa azione non può essere annullata. La città "
-              {selectedCity?.name}" verrà eliminata permanentemente.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annulla</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Elimina
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={handleDelete}
+        entityName="città"
+        entityLabel={selectedItem?.name}
+        isLoading={saving}
+      />
     </SuperAdminLayout>
   );
 }

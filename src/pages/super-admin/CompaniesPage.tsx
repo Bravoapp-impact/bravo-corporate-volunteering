@@ -1,18 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Plus, Search, Edit, Trash2, Building2, Key, ExternalLink } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Plus, Building2, Key, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
 } from "@/components/ui/table";
 import {
   Dialog,
@@ -21,17 +17,8 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { SuperAdminLayout } from "@/components/layout/SuperAdminLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -40,7 +27,14 @@ import { it } from "date-fns/locale";
 import { devLog } from "@/lib/logger";
 import { LogoUpload } from "@/components/super-admin/LogoUpload";
 import { PageHeader } from "@/components/common/PageHeader";
-import { EmptyState } from "@/components/common/EmptyState";
+import {
+  CrudTableCard,
+  CrudTableActions,
+  CrudTableRow,
+  TableEmptyRow,
+  TableLoadingRow,
+  DeleteConfirmDialog,
+} from "@/components/crud";
 
 interface Company {
   id: string;
@@ -73,7 +67,6 @@ export default function CompaniesPage() {
 
   const fetchCompanies = async () => {
     try {
-      // Get companies
       const { data: companiesData, error } = await supabase
         .from("companies")
         .select("*")
@@ -81,7 +74,6 @@ export default function CompaniesPage() {
 
       if (error) throw error;
 
-      // Get access codes count per company
       const { data: accessCodesData, error: accessCodesError } = await supabase
         .from("access_codes")
         .select("entity_id")
@@ -89,14 +81,12 @@ export default function CompaniesPage() {
 
       if (accessCodesError) throw accessCodesError;
 
-      // Count access codes per company
       const accessCodesCountMap = new Map<string, number>();
       (accessCodesData || []).forEach((ac) => {
         const current = accessCodesCountMap.get(ac.entity_id) || 0;
         accessCodesCountMap.set(ac.entity_id, current + 1);
       });
 
-      // Get user counts for each company
       const companiesWithCounts = await Promise.all(
         (companiesData || []).map(async (company) => {
           const { count } = await supabase
@@ -200,6 +190,7 @@ export default function CompaniesPage() {
   const handleDelete = async () => {
     if (!selectedCompany) return;
 
+    setSaving(true);
     try {
       const { error } = await supabase
         .from("companies")
@@ -224,6 +215,8 @@ export default function CompaniesPage() {
         description:
           error.message || "Impossibile eliminare l'azienda. Potrebbe avere utenti associati.",
       });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -245,131 +238,92 @@ export default function CompaniesPage() {
           }
         />
 
-        {/* Table */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
-            <CardHeader>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <CardTitle className="text-lg">{companies.length} Aziende</CardTitle>
-                <div className="relative w-full sm:w-64">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Cerca..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="rounded-lg border border-border overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-muted/50">
-                      <TableHead>Azienda</TableHead>
-                      <TableHead>Codici Accesso</TableHead>
-                      <TableHead>Utenti</TableHead>
-                      <TableHead>Creata il</TableHead>
-                      <TableHead className="w-24">Azioni</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {loading ? (
-                      <TableRow>
-                        <TableCell colSpan={5} className="text-center py-8">
-                          Caricamento...
+          <CrudTableCard
+            title={`${companies.length} Aziende`}
+            searchValue={searchTerm}
+            onSearchChange={setSearchTerm}
+            searchPlaceholder="Cerca azienda..."
+          >
+            <div className="rounded-lg border border-border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <tr className="bg-muted/50">
+                    <TableHead>Azienda</TableHead>
+                    <TableHead>Codici Accesso</TableHead>
+                    <TableHead>Utenti</TableHead>
+                    <TableHead>Creata il</TableHead>
+                    <TableHead className="w-24">Azioni</TableHead>
+                  </tr>
+                </TableHeader>
+                <TableBody>
+                  {loading ? (
+                    <TableLoadingRow colSpan={5} />
+                  ) : filteredCompanies.length === 0 ? (
+                    <TableEmptyRow
+                      colSpan={5}
+                      icon={Building2}
+                      message="Nessuna azienda trovata"
+                      description="Non ci sono aziende che corrispondono alla ricerca."
+                    />
+                  ) : (
+                    filteredCompanies.map((company, index) => (
+                      <CrudTableRow key={company.id} index={index}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            {company.logo_url ? (
+                              <img
+                                src={company.logo_url}
+                                alt={company.name}
+                                className="w-10 h-10 rounded-lg object-cover"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                                <Building2 className="h-5 w-5 text-primary" />
+                              </div>
+                            )}
+                            <span className="font-medium">{company.name}</span>
+                          </div>
                         </TableCell>
-                      </TableRow>
-                    ) : filteredCompanies.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={5}>
-                          <EmptyState
-                            icon={Building2}
-                            title="Nessuna azienda trovata"
-                            description="Non ci sono aziende che corrispondono alla ricerca."
+                        <TableCell>
+                          <Link
+                            to={`/super-admin/access-codes?entity_type=company&entity_id=${company.id}`}
+                            className="inline-flex items-center gap-1.5 text-sm hover:underline"
+                          >
+                            <Key className="h-4 w-4 text-muted-foreground" />
+                            <span>
+                              {company.access_codes_count}{" "}
+                              {company.access_codes_count === 1 ? "codice" : "codici"}
+                            </span>
+                            <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                          </Link>
+                        </TableCell>
+                        <TableCell>{company._count?.users || 0}</TableCell>
+                        <TableCell>
+                          {format(new Date(company.created_at), "dd MMM yyyy", {
+                            locale: it,
+                          })}
+                        </TableCell>
+                        <TableCell>
+                          <CrudTableActions
+                            onEdit={() => handleOpenDialog(company)}
+                            onDelete={() => {
+                              setSelectedCompany(company);
+                              setDeleteDialogOpen(true);
+                            }}
                           />
                         </TableCell>
-                      </TableRow>
-                    ) : (
-                      filteredCompanies.map((company, index) => (
-                        <motion.tr
-                          key={company.id}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.02 }}
-                          className="border-b border-border last:border-0"
-                        >
-                          <TableCell>
-                            <div className="flex items-center gap-3">
-                              {company.logo_url ? (
-                                <img
-                                  src={company.logo_url}
-                                  alt={company.name}
-                                  className="w-10 h-10 rounded-lg object-cover"
-                                />
-                              ) : (
-                                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                                  <Building2 className="h-5 w-5 text-primary" />
-                                </div>
-                              )}
-                              <span className="font-medium">{company.name}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Link
-                              to={`/super-admin/access-codes?entity_type=company&entity_id=${company.id}`}
-                              className="inline-flex items-center gap-1.5 text-sm hover:underline"
-                            >
-                              <Key className="h-4 w-4 text-muted-foreground" />
-                              <span>
-                                {company.access_codes_count}{" "}
-                                {company.access_codes_count === 1 ? "codice" : "codici"}
-                              </span>
-                              <ExternalLink className="h-3 w-3 text-muted-foreground" />
-                            </Link>
-                          </TableCell>
-                          <TableCell>{company._count?.users || 0}</TableCell>
-                          <TableCell>
-                            {format(new Date(company.created_at), "dd MMM yyyy", {
-                              locale: it,
-                            })}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={() => handleOpenDialog(company)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-destructive hover:text-destructive"
-                                onClick={() => {
-                                  setSelectedCompany(company);
-                                  setDeleteDialogOpen(true);
-                                }}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </motion.tr>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
+                      </CrudTableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </CrudTableCard>
         </motion.div>
       </div>
 
@@ -420,27 +374,15 @@ export default function CompaniesPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent className="bg-background">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Elimina Azienda</AlertDialogTitle>
-            <AlertDialogDescription>
-              Sei sicuro di voler eliminare <strong>{selectedCompany?.name}</strong>? Questa
-              azione eliminerà anche tutti i codici di accesso associati.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annulla</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Elimina
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={handleDelete}
+        entityName="azienda"
+        entityLabel={selectedCompany?.name}
+        description={`Sei sicuro di voler eliminare ${selectedCompany?.name}? Questa azione eliminerà anche tutti i codici di accesso associati.`}
+        isLoading={saving}
+      />
     </SuperAdminLayout>
   );
 }

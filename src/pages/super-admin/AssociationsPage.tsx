@@ -2,9 +2,6 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Plus,
-  Search,
-  Edit,
-  Trash2,
   Building,
   MapPin,
   Phone,
@@ -14,9 +11,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -40,17 +35,8 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SuperAdminLayout } from "@/components/layout/SuperAdminLayout";
@@ -61,7 +47,14 @@ import { it } from "date-fns/locale";
 import { devLog } from "@/lib/logger";
 import { LogoUpload } from "@/components/super-admin/LogoUpload";
 import { PageHeader } from "@/components/common/PageHeader";
-import { EmptyState } from "@/components/common/EmptyState";
+import {
+  CrudTableCard,
+  CrudTableActions,
+  CrudTableRow,
+  TableEmptyRow,
+  TableLoadingRow,
+  DeleteConfirmDialog,
+} from "@/components/crud";
 
 interface City {
   id: string;
@@ -135,7 +128,6 @@ export default function AssociationsPage() {
       if (associationsRes.error) throw associationsRes.error;
       if (citiesRes.error) throw citiesRes.error;
 
-      // Fetch association cities
       const { data: associationCities } = await supabase
         .from("association_cities")
         .select("association_id, city_id");
@@ -164,7 +156,6 @@ export default function AssociationsPage() {
 
   const handleOpenDialog = async (association?: Association) => {
     if (association) {
-      // Fetch city IDs for this association
       const { data: assocCities } = await supabase
         .from("association_cities")
         .select("city_id")
@@ -242,7 +233,6 @@ export default function AssociationsPage() {
         if (error) throw error;
         associationId = selectedAssociation.id;
 
-        // Delete existing city associations
         await supabase
           .from("association_cities")
           .delete()
@@ -258,7 +248,6 @@ export default function AssociationsPage() {
         associationId = data.id;
       }
 
-      // Insert new city associations
       if (formData.city_ids.length > 0) {
         const cityAssociations = formData.city_ids.map((cityId) => ({
           association_id: associationId,
@@ -298,6 +287,7 @@ export default function AssociationsPage() {
   const handleDelete = async () => {
     if (!selectedAssociation) return;
 
+    setSaving(true);
     try {
       const { error } = await supabase
         .from("associations")
@@ -323,6 +313,8 @@ export default function AssociationsPage() {
           ? "Impossibile eliminare: ci sono esperienze collegate a questa associazione"
           : error.message || "Impossibile eliminare l'associazione",
       });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -355,6 +347,22 @@ export default function AssociationsPage() {
     return matchesSearch && matchesStatus;
   });
 
+  const statusFilterSelect = (
+    <Select value={statusFilter} onValueChange={setStatusFilter}>
+      <SelectTrigger className="w-full sm:w-40 bg-background">
+        <SelectValue placeholder="Stato" />
+      </SelectTrigger>
+      <SelectContent className="bg-popover">
+        <SelectItem value="all">Tutti</SelectItem>
+        {STATUS_OPTIONS.map((opt) => (
+          <SelectItem key={opt.value} value={opt.value}>
+            {opt.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+
   return (
     <SuperAdminLayout>
       <div className="space-y-6">
@@ -369,255 +377,200 @@ export default function AssociationsPage() {
           }
         />
 
-        {/* Table */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
-            <CardHeader>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <CardTitle className="text-lg">
-                  {associations.length} Associazioni
-                </CardTitle>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <div className="relative w-full sm:w-64">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Cerca..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
+          <CrudTableCard
+            title={`${associations.length} Associazioni`}
+            searchValue={searchTerm}
+            onSearchChange={setSearchTerm}
+            searchPlaceholder="Cerca associazione..."
+            filters={statusFilterSelect}
+          >
+            <div className="rounded-lg border border-border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
+                    <TableHead className="w-12"></TableHead>
+                    <TableHead>Associazione</TableHead>
+                    <TableHead>Contatto</TableHead>
+                    <TableHead>Città</TableHead>
+                    <TableHead>Stato</TableHead>
+                    <TableHead className="w-24">Azioni</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {loading ? (
+                    <TableLoadingRow colSpan={6} />
+                  ) : filteredAssociations.length === 0 ? (
+                    <TableEmptyRow
+                      colSpan={6}
+                      icon={Building}
+                      message="Nessuna associazione trovata"
+                      description="Non ci sono associazioni che corrispondono ai filtri."
                     />
-                  </div>
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-full sm:w-40 bg-background">
-                      <SelectValue placeholder="Stato" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-popover">
-                      <SelectItem value="all">Tutti</SelectItem>
-                      {STATUS_OPTIONS.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="rounded-lg border border-border overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-muted/50">
-                      <TableHead className="w-12"></TableHead>
-                      <TableHead>Associazione</TableHead>
-                      <TableHead>Contatto</TableHead>
-                      <TableHead>Città</TableHead>
-                      <TableHead>Stato</TableHead>
-                      <TableHead className="w-24">Azioni</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {loading ? (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8">
-                          Caricamento...
-                        </TableCell>
-                      </TableRow>
-                    ) : filteredAssociations.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={6}>
-                          <EmptyState
-                            icon={Building}
-                            title="Nessuna associazione trovata"
-                            description="Non ci sono associazioni che corrispondono ai filtri."
-                          />
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      filteredAssociations.map((association, index) => (
-                        <>
-                          <motion.tr
-                            key={association.id}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.02 }}
-                            className="border-b border-border"
-                          >
-                            <TableCell>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={() =>
-                                  setExpandedAssociation(
-                                    expandedAssociation === association.id
-                                      ? null
-                                      : association.id
-                                  )
-                                }
-                              >
-                                {expandedAssociation === association.id ? (
-                                  <ChevronUp className="h-4 w-4" />
-                                ) : (
-                                  <ChevronDown className="h-4 w-4" />
+                  ) : (
+                    filteredAssociations.map((association, index) => (
+                      <>
+                        <CrudTableRow key={association.id} index={index}>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() =>
+                                setExpandedAssociation(
+                                  expandedAssociation === association.id
+                                    ? null
+                                    : association.id
+                                )
+                              }
+                            >
+                              {expandedAssociation === association.id ? (
+                                <ChevronUp className="h-4 w-4" />
+                              ) : (
+                                <ChevronDown className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              {association.logo_url ? (
+                                <img
+                                  src={association.logo_url}
+                                  alt={association.name}
+                                  className="w-10 h-10 rounded-lg object-cover"
+                                />
+                              ) : (
+                                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                                  <Building className="h-5 w-5 text-primary" />
+                                </div>
+                              )}
+                              <span className="font-medium">{association.name}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {association.contact_name || association.contact_email ? (
+                              <div className="text-sm">
+                                {association.contact_name && (
+                                  <p className="font-medium">{association.contact_name}</p>
                                 )}
-                              </Button>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-3">
-                                {association.logo_url ? (
-                                  <img
-                                    src={association.logo_url}
-                                    alt={association.name}
-                                    className="w-10 h-10 rounded-lg object-cover"
-                                  />
-                                ) : (
-                                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                                    <Building className="h-5 w-5 text-primary" />
-                                  </div>
+                                {association.contact_email && (
+                                  <p className="text-muted-foreground text-xs">
+                                    {association.contact_email}
+                                  </p>
                                 )}
-                                <span className="font-medium">{association.name}</span>
                               </div>
-                            </TableCell>
-                            <TableCell>
-                              {association.contact_name || association.contact_email ? (
-                                <div className="text-sm">
-                                  {association.contact_name && (
-                                    <p className="font-medium">{association.contact_name}</p>
-                                  )}
-                                  {association.contact_email && (
-                                    <p className="text-muted-foreground text-xs">
-                                      {association.contact_email}
-                                    </p>
-                                  )}
-                                </div>
-                              ) : (
-                                "—"
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              {association.cities && association.cities.length > 0 ? (
-                                <div className="flex items-center gap-1">
-                                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                                  <span className="text-sm">
-                                    {association.cities.map((c) => c.name).join(", ")}
-                                  </span>
-                                </div>
-                              ) : (
-                                "—"
-                              )}
-                            </TableCell>
-                            <TableCell>{getStatusBadge(association.status)}</TableCell>
-                            <TableCell>
+                            ) : (
+                              "—"
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {association.cities && association.cities.length > 0 ? (
                               <div className="flex items-center gap-1">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8"
-                                  onClick={() => handleOpenDialog(association)}
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 text-destructive hover:text-destructive"
-                                  onClick={() => {
-                                    setSelectedAssociation(association);
-                                    setDeleteDialogOpen(true);
-                                  }}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
+                                <MapPin className="h-4 w-4 text-muted-foreground" />
+                                <span className="text-sm">
+                                  {association.cities.map((c) => c.name).join(", ")}
+                                </span>
                               </div>
-                            </TableCell>
-                          </motion.tr>
-                          {/* Expanded details */}
-                          {expandedAssociation === association.id && (
-                            <TableRow className="bg-muted/30">
-                              <TableCell colSpan={6} className="p-4">
-                                <div className="grid gap-4 md:grid-cols-2">
-                                  <div className="space-y-3">
-                                    <h4 className="font-medium text-sm">Dettagli Contatto</h4>
-                                    <div className="space-y-2 text-sm">
-                                      {association.contact_phone && (
-                                        <div className="flex items-center gap-2">
-                                          <Phone className="h-4 w-4 text-muted-foreground" />
-                                          {association.contact_phone}
-                                        </div>
-                                      )}
-                                      {association.contact_email && (
-                                        <div className="flex items-center gap-2">
-                                          <Mail className="h-4 w-4 text-muted-foreground" />
-                                          {association.contact_email}
-                                        </div>
-                                      )}
-                                      {association.website && (
-                                        <div className="flex items-center gap-2">
-                                          <Globe className="h-4 w-4 text-muted-foreground" />
-                                          <a
-                                            href={association.website}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-primary hover:underline"
-                                          >
-                                            {association.website}
-                                          </a>
-                                        </div>
-                                      )}
-                                      {association.address && (
-                                        <div className="flex items-center gap-2">
-                                          <MapPin className="h-4 w-4 text-muted-foreground" />
-                                          {association.address}
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <div className="space-y-3">
-                                    <h4 className="font-medium text-sm">Info Interne</h4>
-                                    <div className="space-y-2 text-sm">
-                                      {association.partnership_start_date && (
-                                        <div className="flex items-center gap-2">
-                                          <Calendar className="h-4 w-4 text-muted-foreground" />
-                                          Partnership dal{" "}
-                                          {format(
-                                            new Date(association.partnership_start_date),
-                                            "d MMMM yyyy",
-                                            { locale: it }
-                                          )}
-                                        </div>
-                                      )}
-                                      {association.internal_notes && (
-                                        <div className="p-3 rounded-lg bg-background border border-border">
-                                          <p className="text-muted-foreground text-xs">
-                                            Note interne:
-                                          </p>
-                                          <p className="mt-1">{association.internal_notes}</p>
-                                        </div>
-                                      )}
-                                      {association.description && (
-                                        <p className="text-muted-foreground">
-                                          {association.description}
-                                        </p>
-                                      )}
-                                    </div>
+                            ) : (
+                              "—"
+                            )}
+                          </TableCell>
+                          <TableCell>{getStatusBadge(association.status)}</TableCell>
+                          <TableCell>
+                            <CrudTableActions
+                              onEdit={() => handleOpenDialog(association)}
+                              onDelete={() => {
+                                setSelectedAssociation(association);
+                                setDeleteDialogOpen(true);
+                              }}
+                            />
+                          </TableCell>
+                        </CrudTableRow>
+                        {/* Expanded details */}
+                        {expandedAssociation === association.id && (
+                          <TableRow className="bg-muted/30">
+                            <TableCell colSpan={6} className="p-4">
+                              <div className="grid gap-4 md:grid-cols-2">
+                                <div className="space-y-3">
+                                  <h4 className="font-medium text-sm">Dettagli Contatto</h4>
+                                  <div className="space-y-2 text-sm">
+                                    {association.contact_phone && (
+                                      <div className="flex items-center gap-2">
+                                        <Phone className="h-4 w-4 text-muted-foreground" />
+                                        {association.contact_phone}
+                                      </div>
+                                    )}
+                                    {association.contact_email && (
+                                      <div className="flex items-center gap-2">
+                                        <Mail className="h-4 w-4 text-muted-foreground" />
+                                        {association.contact_email}
+                                      </div>
+                                    )}
+                                    {association.website && (
+                                      <div className="flex items-center gap-2">
+                                        <Globe className="h-4 w-4 text-muted-foreground" />
+                                        <a
+                                          href={association.website}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="text-primary hover:underline"
+                                        >
+                                          {association.website}
+                                        </a>
+                                      </div>
+                                    )}
+                                    {association.address && (
+                                      <div className="flex items-center gap-2">
+                                        <MapPin className="h-4 w-4 text-muted-foreground" />
+                                        {association.address}
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
-                              </TableCell>
-                            </TableRow>
-                          )}
-                        </>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
+                                <div className="space-y-3">
+                                  <h4 className="font-medium text-sm">Info Interne</h4>
+                                  <div className="space-y-2 text-sm">
+                                    {association.partnership_start_date && (
+                                      <div className="flex items-center gap-2">
+                                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                                        Partnership dal{" "}
+                                        {format(
+                                          new Date(association.partnership_start_date),
+                                          "d MMMM yyyy",
+                                          { locale: it }
+                                        )}
+                                      </div>
+                                    )}
+                                    {association.internal_notes && (
+                                      <div className="p-3 rounded-lg bg-background border border-border">
+                                        <p className="text-muted-foreground text-xs">
+                                          Note interne:
+                                        </p>
+                                        <p className="mt-1">{association.internal_notes}</p>
+                                      </div>
+                                    )}
+                                    {association.description && (
+                                      <p className="text-muted-foreground">
+                                        {association.description}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </CrudTableCard>
         </motion.div>
       </div>
 
@@ -817,27 +770,14 @@ export default function AssociationsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent className="bg-background">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Eliminare questa associazione?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Questa azione non può essere annullata. L'associazione "
-              {selectedAssociation?.name}" verrà eliminata permanentemente.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annulla</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Elimina
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={handleDelete}
+        entityName="associazione"
+        entityLabel={selectedAssociation?.name}
+        isLoading={saving}
+      />
     </SuperAdminLayout>
   );
 }

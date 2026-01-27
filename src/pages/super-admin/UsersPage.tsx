@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Search, User, Building2, Pencil, Trash2, AlertTriangle } from "lucide-react";
+import { Search, User, Building2, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +11,6 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
 } from "@/components/ui/table";
 import {
   Select,
@@ -28,16 +27,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
 import { SuperAdminLayout } from "@/components/layout/SuperAdminLayout";
@@ -47,7 +36,13 @@ import { it } from "date-fns/locale";
 import { devLog } from "@/lib/logger";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/common/PageHeader";
-import { EmptyState } from "@/components/common/EmptyState";
+import {
+  CrudTableActions,
+  CrudTableRow,
+  TableEmptyRow,
+  TableLoadingRow,
+  DeleteConfirmDialog,
+} from "@/components/crud";
 
 interface Profile {
   id: string;
@@ -87,7 +82,6 @@ interface EditFormData {
   association_id: string | null;
 }
 
-// Helper per determinare quali campi mostrare in base al ruolo
 const roleRequiresCompany = (role: string) => ['employee', 'hr_admin'].includes(role);
 const roleRequiresAssociation = (role: string) => role === 'association_admin';
 const roleShowsCompany = (role: string) => ['employee', 'hr_admin', 'super_admin'].includes(role);
@@ -102,7 +96,6 @@ export default function UsersPage() {
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [companyFilter, setCompanyFilter] = useState<string>("all");
   
-  // Edit dialog state
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<Profile | null>(null);
   const [editFormData, setEditFormData] = useState<EditFormData>({
@@ -115,7 +108,6 @@ export default function UsersPage() {
   });
   const [saving, setSaving] = useState(false);
   
-  // Delete dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingUser, setDeletingUser] = useState<Profile | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -169,27 +161,16 @@ export default function UsersPage() {
   const getRoleBadge = (role: string) => {
     switch (role) {
       case "super_admin":
-        return (
-          <Badge className="bg-primary text-primary-foreground">
-            Super Admin
-          </Badge>
-        );
+        return <Badge className="bg-primary text-primary-foreground">Super Admin</Badge>;
       case "hr_admin":
-        return (
-          <Badge className="bg-bravo-magenta text-white">HR Admin</Badge>
-        );
+        return <Badge className="bg-bravo-magenta text-white">HR Admin</Badge>;
       case "association_admin":
-        return (
-          <Badge className="bg-secondary text-secondary-foreground">
-            Admin Associazione
-          </Badge>
-        );
+        return <Badge className="bg-secondary text-secondary-foreground">Admin Associazione</Badge>;
       default:
         return <Badge variant="secondary">Dipendente</Badge>;
     }
   };
 
-  // Calcola l'avviso per il cambio ruolo
   const getRoleChangeWarning = () => {
     if (!editingUser) return null;
     
@@ -198,12 +179,10 @@ export default function UsersPage() {
     
     if (originalRole === newRole) return null;
     
-    // Da ruolo aziendale a association_admin
     if (roleRequiresCompany(originalRole) && newRole === 'association_admin' && editingUser.companies) {
       return `L'utente verrà rimosso da "${editingUser.companies.name}"`;
     }
     
-    // Da association_admin a ruolo aziendale
     if (originalRole === 'association_admin' && roleRequiresCompany(newRole) && editingUser.associations) {
       return `L'utente verrà rimosso da "${editingUser.associations.name}"`;
     }
@@ -228,15 +207,11 @@ export default function UsersPage() {
     setEditFormData((prev) => {
       const updated = { ...prev, role: newRole };
       
-      // Pulizia campi in base al nuovo ruolo
       if (roleRequiresCompany(newRole)) {
-        // employee o hr_admin: pulisci association_id
         updated.association_id = null;
       } else if (roleRequiresAssociation(newRole)) {
-        // association_admin: pulisci company_id
         updated.company_id = null;
       }
-      // super_admin: mantiene entrambi (opzionali)
       
       return updated;
     });
@@ -245,7 +220,6 @@ export default function UsersPage() {
   const handleSaveEdit = async () => {
     if (!editingUser) return;
     
-    // Validazione base
     if (!editFormData.email.trim()) {
       toast.error("L'email è obbligatoria");
       return;
@@ -259,7 +233,6 @@ export default function UsersPage() {
       return;
     }
 
-    // Validazione entità in base al ruolo
     if (roleRequiresCompany(editFormData.role) && !editFormData.company_id) {
       toast.error("Seleziona un'azienda per questo ruolo");
       return;
@@ -271,7 +244,6 @@ export default function UsersPage() {
 
     setSaving(true);
     try {
-      // Prepara i valori per il salvataggio in base al ruolo
       let finalCompanyId: string | null = null;
       let finalAssociationId: string | null = null;
 
@@ -280,12 +252,10 @@ export default function UsersPage() {
       } else if (roleRequiresAssociation(editFormData.role)) {
         finalAssociationId = editFormData.association_id;
       } else if (editFormData.role === 'super_admin') {
-        // Super admin: mantiene entrambi se valorizzati
         finalCompanyId = editFormData.company_id;
         finalAssociationId = editFormData.association_id;
       }
 
-      // Update profile
       const { error: profileError } = await supabase
         .from("profiles")
         .update({
@@ -300,7 +270,6 @@ export default function UsersPage() {
 
       if (profileError) throw profileError;
 
-      // Update user_tenants table
       const { error: tenantError } = await supabase
         .from("user_tenants")
         .upsert({
@@ -312,12 +281,9 @@ export default function UsersPage() {
 
       if (tenantError) {
         devLog.error("Error updating user_tenants:", tenantError);
-        // Non blocchiamo, profiles è il dato principale
       }
 
-      // Update role in user_roles table if role changed
       if (editFormData.role !== editingUser.role) {
-        // Use RPC function for role change (bypasses RLS)
         const { error: roleError } = await supabase.rpc('admin_set_user_role', {
           p_user_id: editingUser.id,
           p_role: editFormData.role as "employee" | "hr_admin" | "association_admin" | "super_admin",
@@ -366,7 +332,6 @@ export default function UsersPage() {
     }
   };
 
-  // Funzione per mostrare azienda/associazione nella tabella
   const getEntityDisplay = (user: Profile) => {
     if (user.companies) {
       return (
@@ -397,7 +362,6 @@ export default function UsersPage() {
           description="Gestisci tutti gli utenti registrati sulla piattaforma"
         />
 
-        {/* Table */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -452,41 +416,28 @@ export default function UsersPage() {
               <div className="rounded-lg border border-border overflow-hidden">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-muted/50">
+                    <tr className="bg-muted/50">
                       <TableHead>Utente</TableHead>
                       <TableHead>Email</TableHead>
                       <TableHead>Ruolo</TableHead>
                       <TableHead>Azienda/Associazione</TableHead>
                       <TableHead>Registrato il</TableHead>
                       <TableHead className="text-right">Azioni</TableHead>
-                    </TableRow>
+                    </tr>
                   </TableHeader>
                   <TableBody>
                     {loading ? (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8">
-                          Caricamento...
-                        </TableCell>
-                      </TableRow>
+                      <TableLoadingRow colSpan={6} />
                     ) : filteredUsers.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={6}>
-                          <EmptyState
-                            icon={User}
-                            title="Nessun utente trovato"
-                            description="Non ci sono utenti che corrispondono ai filtri."
-                          />
-                        </TableCell>
-                      </TableRow>
+                      <TableEmptyRow
+                        colSpan={6}
+                        icon={User}
+                        message="Nessun utente trovato"
+                        description="Non ci sono utenti che corrispondono ai filtri."
+                      />
                     ) : (
                       filteredUsers.map((user, index) => (
-                        <motion.tr
-                          key={user.id}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.02 }}
-                          className="border-b border-border last:border-0"
-                        >
+                        <CrudTableRow key={user.id} index={index}>
                           <TableCell>
                             <div className="flex items-center gap-3">
                               <div className="w-9 h-9 rounded-full bg-bravo-purple/10 flex items-center justify-center">
@@ -510,26 +461,12 @@ export default function UsersPage() {
                             })}
                           </TableCell>
                           <TableCell className="text-right">
-                            <div className="flex items-center justify-end gap-2">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleOpenEdit(user)}
-                                className="h-8 w-8"
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleOpenDelete(user)}
-                                className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
+                            <CrudTableActions
+                              onEdit={() => handleOpenEdit(user)}
+                              onDelete={() => handleOpenDelete(user)}
+                            />
                           </TableCell>
-                        </motion.tr>
+                        </CrudTableRow>
                       ))
                     )}
                   </TableBody>
@@ -617,7 +554,6 @@ export default function UsersPage() {
               </Select>
             </div>
 
-            {/* Avviso cambio ruolo */}
             {roleChangeWarning && (
               <Alert variant="destructive" className="bg-destructive/10 border-destructive/30">
                 <AlertTriangle className="h-4 w-4" />
@@ -625,7 +561,6 @@ export default function UsersPage() {
               </Alert>
             )}
 
-            {/* Campo Azienda - visibile per employee, hr_admin, super_admin */}
             {roleShowsCompany(editFormData.role) && (
               <div className="space-y-2">
                 <Label htmlFor="company">
@@ -657,7 +592,6 @@ export default function UsersPage() {
               </div>
             )}
 
-            {/* Campo Associazione - visibile per association_admin, super_admin */}
             {roleShowsAssociation(editFormData.role) && (
               <div className="space-y-2">
                 <Label htmlFor="association">
@@ -704,31 +638,14 @@ export default function UsersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Elimina Utente</AlertDialogTitle>
-            <AlertDialogDescription>
-              Sei sicuro di voler eliminare l'utente{" "}
-              <span className="font-semibold">
-                {deletingUser?.first_name} {deletingUser?.last_name}
-              </span>
-              ? Questa azione non può essere annullata.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Annulla</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmDelete}
-              disabled={deleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {deleting ? "Eliminazione..." : "Elimina"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={handleConfirmDelete}
+        entityName="utente"
+        entityLabel={deletingUser ? `${deletingUser.first_name} ${deletingUser.last_name}` : undefined}
+        isLoading={deleting}
+      />
     </SuperAdminLayout>
   );
 }
