@@ -30,6 +30,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import bravoLogo from "@/assets/bravo-logo.png";
 
 interface SuperAdminLayoutProps {
   children: ReactNode;
@@ -129,8 +130,8 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
         )}
       >
         <div className="flex h-16 items-center justify-between border-b border-border/50 px-4">
-          <Link to="/super-admin" className="flex items-center gap-2">
-            <span className="text-2xl font-bold text-primary">Bravo!</span>
+          <Link to="/super-admin" className="flex items-center">
+            <img src={bravoLogo} alt="Bravo!" className="h-7 w-auto" />
           </Link>
           <Button
             variant="ghost"
@@ -199,6 +200,14 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-56 bg-popover">
               <DropdownMenuItem
+                onClick={() => navigate("/super-admin/profile")}
+                className="cursor-pointer"
+              >
+                <User className="mr-2 h-4 w-4" />
+                Il mio profilo
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
                 onClick={handleSignOut}
                 className="text-destructive cursor-pointer"
               >
@@ -221,8 +230,8 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
           >
             <Menu className="h-5 w-5" />
           </Button>
-          <Link to="/super-admin" className="flex items-center gap-2">
-            <span className="text-xl font-bold text-primary">Bravo!</span>
+          <Link to="/super-admin" className="flex items-center">
+            <img src={bravoLogo} alt="Bravo!" className="h-6 w-auto" />
           </Link>
           <Badge className="bg-primary/10 text-primary font-medium text-xs">
             Super Admin

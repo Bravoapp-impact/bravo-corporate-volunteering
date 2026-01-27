@@ -528,6 +528,7 @@ export type Database = {
       profiles: {
         Row: {
           association_id: string | null
+          avatar_url: string | null
           company_id: string | null
           created_at: string
           email: string
@@ -538,6 +539,7 @@ export type Database = {
         }
         Insert: {
           association_id?: string | null
+          avatar_url?: string | null
           company_id?: string | null
           created_at?: string
           email: string
@@ -548,6 +550,7 @@ export type Database = {
         }
         Update: {
           association_id?: string | null
+          avatar_url?: string | null
           company_id?: string | null
           created_at?: string
           email?: string

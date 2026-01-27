@@ -182,6 +182,14 @@ export function HRLayout({ children }: HRLayoutProps) {
               </div>
               <DropdownMenuSeparator />
               <DropdownMenuItem
+                onClick={() => navigate("/hr/profile")}
+                className="cursor-pointer"
+              >
+                <User className="mr-2 h-4 w-4" />
+                Il mio profilo
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
                 onClick={handleSignOut}
                 className="text-destructive cursor-pointer"
               >

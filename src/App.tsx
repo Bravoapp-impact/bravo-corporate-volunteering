@@ -21,6 +21,7 @@ import HRDashboard from "./pages/HRDashboard";
 import HRExperiencesPage from "./pages/hr/HRExperiencesPage";
 import HREmployeesPage from "./pages/hr/HREmployeesPage";
 import SuperAdminDashboard from "./pages/super-admin/SuperAdminDashboard";
+import SuperAdminProfile from "./pages/super-admin/SuperAdminProfile";
 import CompaniesPage from "./pages/super-admin/CompaniesPage";
 import ExperiencesPage from "./pages/super-admin/ExperiencesPage";
 import AssignmentsPage from "./pages/super-admin/AssignmentsPage";
@@ -34,6 +35,8 @@ import AssociationDashboard from "./pages/association/AssociationDashboard";
 import AssociationExperiencesPage from "./pages/association/AssociationExperiencesPage";
 import AssociationHistoryPage from "./pages/association/AssociationHistoryPage";
 import AssociationProfilePage from "./pages/association/AssociationProfilePage";
+import AssociationAdminProfile from "./pages/association/AssociationAdminProfile";
+import HRProfile from "./pages/hr/HRProfile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -104,6 +107,14 @@ const App = () => (
               element={
                 <ProtectedHRRoute>
                   <HREmployeesPage />
+                </ProtectedHRRoute>
+              }
+            />
+            <Route
+              path="/hr/profile"
+              element={
+                <ProtectedHRRoute>
+                  <HRProfile />
                 </ProtectedHRRoute>
               }
             />
@@ -188,6 +199,14 @@ const App = () => (
                 </ProtectedSuperAdminRoute>
               }
             />
+            <Route
+              path="/super-admin/profile"
+              element={
+                <ProtectedSuperAdminRoute>
+                  <SuperAdminProfile />
+                </ProtectedSuperAdminRoute>
+              }
+            />
             {/* Association Admin Routes */}
             <Route
               path="/association"
@@ -218,6 +237,14 @@ const App = () => (
               element={
                 <ProtectedAssociationRoute>
                   <AssociationProfilePage />
+                </ProtectedAssociationRoute>
+              }
+            />
+            <Route
+              path="/association/my-profile"
+              element={
+                <ProtectedAssociationRoute>
+                  <AssociationAdminProfile />
                 </ProtectedAssociationRoute>
               }
             />
