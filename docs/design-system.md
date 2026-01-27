@@ -606,6 +606,162 @@ import { EmptyState } from "@/components/common/EmptyState";
 
 ---
 
+### BaseCardImage
+
+Componente per la gestione uniforme delle immagini nelle card in stile Airbnb. Supporta aspect ratio, fallback emoji e badge overlay.
+
+**Path:** `src/components/common/BaseCardImage.tsx`
+
+```tsx
+import { BaseCardImage } from "@/components/common/BaseCardImage";
+
+// Uso base con immagine quadrata
+<BaseCardImage
+  imageUrl={experience.image_url}
+  alt={experience.title}
+/>
+
+// Con badge overlay (es. categoria o data)
+<BaseCardImage
+  imageUrl={experience.image_url}
+  alt={experience.title}
+  aspectRatio="square"
+  badge={
+    <Badge variant="secondary" className="bg-white/95 backdrop-blur-sm">
+      Ambiente
+    </Badge>
+  }
+  badgePosition="top-left"
+/>
+
+// Aspect ratio diverso e emoji custom
+<BaseCardImage
+  imageUrl={null}
+  alt="Placeholder"
+  aspectRatio="video"
+  fallbackEmoji="🎉"
+/>
+```
+
+**Props:**
+| Prop | Tipo | Obbligatorio | Default | Descrizione |
+|------|------|--------------|---------|-------------|
+| `imageUrl` | `string \| null` | ✅ | - | URL dell'immagine |
+| `alt` | `string` | ✅ | - | Testo alternativo per accessibilità |
+| `aspectRatio` | `"square" \| "video" \| "portrait"` | ❌ | `"square"` | Aspect ratio dell'immagine |
+| `fallbackEmoji` | `string` | ❌ | `"🤝"` | Emoji mostrata se `imageUrl` è null |
+| `badge` | `ReactNode` | ❌ | - | Contenuto overlay (Badge, data, etc.) |
+| `badgePosition` | `"top-left" \| "top-right" \| "bottom-left" \| "bottom-right"` | ❌ | `"top-left"` | Posizione del badge |
+| `className` | `string` | ❌ | - | Classi CSS per il container |
+| `imageClassName` | `string` | ❌ | - | Classi CSS per l'immagine |
+
+**Aspect Ratio:**
+- `square`: `aspect-square` (1:1) - default per card esperienze/prenotazioni
+- `video`: `aspect-video` (16:9) - per banner o preview video
+- `portrait`: `aspect-[3/4]` (3:4) - per immagini verticali
+
+**Caratteristiche:**
+- Rounded-2xl standard
+- Transizione hover `scale-105` (richiede `group` sul parent)
+- Fallback con emoji centrata su sfondo `bg-muted`
+
+---
+
+### BaseModal
+
+Componente wrapper per modal in stile bottom-sheet (mobile-first) con supporto per header, back button e animazioni Framer Motion.
+
+**Path:** `src/components/common/BaseModal.tsx`
+
+```tsx
+import { BaseModal, ModalCloseButton } from "@/components/common/BaseModal";
+
+// Modal semplice (bottom-sheet mobile, centered desktop)
+<BaseModal open={isOpen} onClose={() => setIsOpen(false)}>
+  <div className="p-5">
+    <h2>Contenuto modal</h2>
+    <p>Il tuo contenuto qui...</p>
+  </div>
+</BaseModal>
+
+// Modal con header (back + title + close)
+<BaseModal
+  open={isOpen}
+  onClose={handleClose}
+  showBackButton
+  onBack={handleBack}
+  title="Seleziona una data"
+>
+  <div className="p-5">
+    {/* Contenuto */}
+  </div>
+</BaseModal>
+
+// Modal con close button overlay (no header)
+<BaseModal open={isOpen} onClose={handleClose}>
+  <div className="relative">
+    <div className="absolute top-4 right-4 z-10">
+      <ModalCloseButton onClick={handleClose} />
+    </div>
+    <BaseCardImage imageUrl={image} alt="Preview" />
+    <div className="p-5">{/* Contenuto */}</div>
+  </div>
+</BaseModal>
+```
+
+**Props BaseModal:**
+| Prop | Tipo | Obbligatorio | Default | Descrizione |
+|------|------|--------------|---------|-------------|
+| `open` | `boolean` | ✅ | - | Controlla visibilità modal |
+| `onClose` | `() => void` | ✅ | - | Callback alla chiusura |
+| `children` | `ReactNode` | ✅ | - | Contenuto del modal |
+| `showBackButton` | `boolean` | ❌ | `false` | Mostra freccia back nell'header |
+| `onBack` | `() => void` | ❌ | `onClose` | Callback per back button |
+| `title` | `string` | ❌ | - | Titolo centrato nell'header |
+| `showCloseButton` | `boolean` | ❌ | `true` | Mostra X nell'header |
+| `className` | `string` | ❌ | - | Classi CSS per il container modal |
+
+**Props ModalCloseButton:**
+| Prop | Tipo | Obbligatorio | Descrizione |
+|------|------|--------------|-------------|
+| `onClick` | `() => void` | ✅ | Callback al click |
+| `className` | `string` | ❌ | Classi CSS aggiuntive |
+
+**Comportamento:**
+- **Mobile**: Bottom-sheet con `rounded-t-3xl`, slide-up animation
+- **Desktop** (sm+): Modal centrato con `rounded-3xl`
+- Z-index: `z-[100]` per sovrapporsi alla navigazione
+- Max height: `95vh` mobile, `90vh` desktop
+- Backdrop: `bg-black/50 backdrop-blur-sm`
+
+**Pattern consigliato per modal con immagine:**
+
+```tsx
+<BaseModal open={!!selectedItem} onClose={() => setSelectedItem(null)}>
+  <div className="flex flex-col max-h-[95vh] sm:max-h-[90vh]">
+    {/* Close button overlay */}
+    <div className="absolute top-4 right-4 z-10">
+      <ModalCloseButton onClick={() => setSelectedItem(null)} />
+    </div>
+
+    {/* Scrollable content */}
+    <div className="flex-1 overflow-y-auto">
+      <BaseCardImage imageUrl={item.image} alt={item.title} className="rounded-none" />
+      <div className="p-5 space-y-4">
+        {/* Contenuto */}
+      </div>
+    </div>
+
+    {/* Fixed footer */}
+    <div className="flex-shrink-0 p-5 border-t border-border bg-background">
+      <Button className="w-full h-12">Conferma</Button>
+    </div>
+  </div>
+</BaseModal>
+```
+
+---
+
 ### ProfileEditForm
 
 Form riutilizzabile per la modifica del profilo utente (nome, cognome).
