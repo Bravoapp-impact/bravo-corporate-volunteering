@@ -41,6 +41,8 @@ export default function Login() {
           navigate("/super-admin");
         } else if (profile?.role === "hr_admin") {
           navigate("/hr");
+        } else if (profile?.role === "association_admin") {
+          navigate("/association");
         } else {
           navigate("/app/experiences");
         }
