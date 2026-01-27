@@ -117,13 +117,13 @@ export function HRLayout({ children }: HRLayoutProps) {
         </div>
 
         {/* HR Admin badge */}
-        <div className="p-4 border-b border-border/50">
+        <div className="p-4">
           <Badge className="w-full justify-center bg-primary/10 text-primary font-medium py-1.5">
             HR Admin
           </Badge>
         </div>
 
-        <ScrollArea className="h-[calc(100vh-12rem)] px-3 pt-3">
+        <ScrollArea className="h-[calc(100vh-10rem)] px-3">
           <nav className="space-y-1">
             {sidebarItems.map((item) => {
               const Icon = item.icon;

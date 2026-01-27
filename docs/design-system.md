@@ -377,6 +377,133 @@ Se trovi componenti con il vecchio stile, aggiornali così:
 
 ---
 
+## 🏢 Aree Admin - Template Struttura Pagina
+
+### Layout Sidebar Unificato
+
+Tutti i pannelli admin (Super Admin, HR Admin, Association Admin) usano lo stesso pattern di layout:
+
+```text
+AdminLayout
+├── Sidebar (w-64, bg-card/95 backdrop-blur-md, border-r border-border/50)
+│   ├── Header (h-16): Logo Bravo! + Close button mobile
+│   ├── Identity Badge (p-4): Badge ruolo/entità centrato (bg-primary/10 text-primary)
+│   ├── Navigation (ScrollArea h-[calc(100vh-10rem)]): Menu items (space-y-1)
+│   └── User Footer (fixed bottom): Dropdown utente con avatar
+├── Mobile Header (sticky, h-16): Hamburger + Logo + Badge
+└── Main Content (p-4 sm:p-6 lg:p-8)
+```
+
+**Regole Sidebar:**
+- Larghezza: `w-64`
+- Sfondo: `bg-card/95 backdrop-blur-md`
+- Bordo: `border-r border-border/50`
+- Header: `h-16` con Logo Bravo! (come immagine o testo)
+- Badge identità: `bg-primary/10 text-primary`, centrato, `py-1.5`, larghezza piena
+- Item attivo: `bg-primary text-primary-foreground`
+- Item hover: `hover:bg-muted hover:text-foreground`
+
+### Struttura Pagina Standard
+
+Ogni pagina admin segue questo template:
+
+```tsx
+<Layout>
+  <div className="space-y-6">
+    
+    {/* 1. HEADER - Sempre presente */}
+    <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+      <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Titolo</h1>
+      <p className="text-muted-foreground mt-1 text-sm sm:text-base">
+        Descrizione breve
+      </p>
+    </motion.div>
+
+    {/* 2. METRICHE (opzionale) - Per dashboard con KPI */}
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {/* Metric Cards */}
+      </div>
+    </motion.div>
+
+    {/* 3. CONTENUTO PRINCIPALE */}
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+      <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
+        {/* Table, Grid o altro contenuto */}
+      </Card>
+    </motion.div>
+
+  </div>
+</Layout>
+```
+
+### Animazioni Standard
+
+| Elemento | Animazione |
+|----------|------------|
+| Header pagina | `initial={{ opacity: 0, y: -10 }}` |
+| Contenuto | `initial={{ opacity: 0, y: 10 }}, transition={{ delay: 0.1-0.2 }}` |
+| Items lista/grid | `transition={{ delay: index * 0.05 }}` |
+| Card metriche | `transition={{ delay: index * 0.1 }}` |
+
+### Card Container Standard
+
+Tutte le card admin usano:
+
+```tsx
+<Card className="border-border/50 bg-card/80 backdrop-blur-sm">
+  <CardContent className="p-4 sm:p-6">
+    ...
+  </CardContent>
+</Card>
+
+// Con hover (per card cliccabili)
+<Card className="border-border/50 bg-card/80 backdrop-blur-sm hover:shadow-md transition-shadow">
+```
+
+### Metric Card Standard
+
+```tsx
+<Card className="border-border/50 bg-card/80 backdrop-blur-sm hover:shadow-md transition-shadow">
+  <CardContent className="p-4 sm:p-6">
+    <div className="flex items-start justify-between">
+      <div>
+        <p className="text-sm font-medium text-muted-foreground">{label}</p>
+        <p className="text-2xl sm:text-3xl font-bold mt-2">{value}</p>
+      </div>
+      <div className={`p-2.5 sm:p-3 rounded-xl ${bgColor}`}>
+        <Icon className={`h-5 w-5 sm:h-6 sm:w-6 ${textColor}`} />
+      </div>
+    </div>
+  </CardContent>
+</Card>
+```
+
+### Empty State Standard
+
+```tsx
+<div className="flex flex-col items-center justify-center py-12 text-center">
+  <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+    <Icon className="h-8 w-8 text-muted-foreground/50" />
+  </div>
+  <h3 className="text-lg font-medium text-foreground mb-1">Nessun elemento</h3>
+  <p className="text-sm text-muted-foreground max-w-sm">Descrizione vuota.</p>
+</div>
+```
+
+### Loading State Standard
+
+```tsx
+<div className="flex items-center justify-center min-h-[60vh]">
+  <div className="flex flex-col items-center gap-4">
+    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    <p className="text-muted-foreground">Caricamento...</p>
+  </div>
+</div>
+```
+
+---
+
 ## 📚 Riferimenti
 
 - **Tailwind Config**: `tailwind.config.ts`

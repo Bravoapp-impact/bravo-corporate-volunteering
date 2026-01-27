@@ -145,15 +145,14 @@ export default function SuperAdminDashboard() {
 
   return (
     <SuperAdminLayout>
-      <div className="space-y-8">
+      <div className="space-y-6">
         {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
+          initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="space-y-2"
         >
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground mt-1 text-sm sm:text-base">
             Panoramica globale della piattaforma Bravo!
           </p>
         </motion.div>
@@ -170,21 +169,21 @@ export default function SuperAdminDashboard() {
                 transition={{ delay: index * 0.1 }}
               >
                 <Card className="border-border/50 bg-card/80 backdrop-blur-sm hover:shadow-md transition-shadow">
-                  <CardContent className="p-6">
+                  <CardContent className="p-4 sm:p-6">
                     <div className="flex items-start justify-between">
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">
                           {stat.label}
                         </p>
-                        <p className="text-3xl font-bold mt-2">{stat.value}</p>
+                        <p className="text-2xl sm:text-3xl font-bold mt-2">{stat.value}</p>
                         {stat.subLabel && (
                           <p className="text-xs text-muted-foreground mt-1">
                             {stat.subLabel}
                           </p>
                         )}
                       </div>
-                      <div className={`p-3 rounded-xl ${stat.bgColor}`}>
-                        <Icon className={`h-6 w-6 ${stat.color}`} />
+                      <div className={`p-2.5 sm:p-3 rounded-xl ${stat.bgColor}`}>
+                        <Icon className={`h-5 w-5 sm:h-6 sm:w-6 ${stat.color}`} />
                       </div>
                     </div>
                   </CardContent>

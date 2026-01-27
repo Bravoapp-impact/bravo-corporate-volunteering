@@ -23,7 +23,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
 
 interface AssociationLayoutProps {
   children: ReactNode;
@@ -109,25 +109,14 @@ export function AssociationLayout({ children }: AssociationLayoutProps) {
           </Button>
         </div>
 
-        {/* Association Badge with Logo */}
-        <div className="p-4 space-y-3">
-          <div className="flex items-center gap-3">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={associationLogo || undefined} alt={associationName} />
-              <AvatarFallback className="bg-primary/10 text-primary">
-                {associationName.charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{associationName}</p>
-              <Badge variant="secondary" className="text-xs mt-0.5">
-                Associazione
-              </Badge>
-            </div>
-          </div>
+        {/* Association badge */}
+        <div className="p-4">
+          <Badge className="w-full justify-center bg-primary/10 text-primary font-medium py-1.5">
+            {associationName}
+          </Badge>
         </div>
 
-        <ScrollArea className="h-[calc(100vh-12rem)] px-3">
+        <ScrollArea className="h-[calc(100vh-10rem)] px-3">
           <nav className="space-y-1">
             {sidebarItems.map((item) => {
               const Icon = item.icon;
@@ -203,12 +192,9 @@ export function AssociationLayout({ children }: AssociationLayoutProps) {
           <Link to="/association" className="flex items-center gap-2">
             <span className="text-xl font-bold text-primary">Bravo!</span>
           </Link>
-          <Avatar className="h-8 w-8 ml-auto">
-            <AvatarImage src={associationLogo || undefined} alt={associationName} />
-            <AvatarFallback className="bg-primary/10 text-primary text-xs">
-              {associationName.charAt(0).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
+          <Badge className="bg-primary/10 text-primary font-medium text-xs ml-auto">
+            Associazione
+          </Badge>
         </header>
 
         {/* Page content */}

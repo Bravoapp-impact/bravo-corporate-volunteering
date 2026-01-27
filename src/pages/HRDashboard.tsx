@@ -200,7 +200,7 @@ export default function HRDashboard() {
 
   return (
     <HRLayout>
-      <div className="space-y-6 sm:space-y-8">
+      <div className="space-y-6">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}

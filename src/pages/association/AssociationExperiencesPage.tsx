@@ -105,7 +105,7 @@ export default function AssociationExperiencesPage() {
 
   return (
     <AssociationLayout>
-      <div className="space-y-6 sm:space-y-8">
+      <div className="space-y-6">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
@@ -119,7 +119,7 @@ export default function AssociationExperiencesPage() {
 
         {/* Experiences Grid */}
         {experiences.length === 0 ? (
-          <Card>
+          <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
             <CardContent className="flex flex-col items-center justify-center py-12 text-center">
               <PackageOpen className="h-12 w-12 text-muted-foreground/50 mb-4" />
               <h3 className="text-lg font-medium text-foreground mb-1">
@@ -139,7 +139,7 @@ export default function AssociationExperiencesPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
               >
-                <Card className="overflow-hidden hover:shadow-md transition-shadow h-full flex flex-col">
+                <Card className="border-border/50 bg-card/80 backdrop-blur-sm overflow-hidden hover:shadow-md transition-shadow h-full flex flex-col">
                   <AspectRatio ratio={16 / 9}>
                     {experience.image_url ? (
                       <img
