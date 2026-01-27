@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { X, MapPin, Users, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { MapPin, Users, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { format, isSameMonth, addMonths, subMonths, startOfMonth } from "date-fns";
 import { it } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BaseModal, ModalCloseButton } from "@/components/common/BaseModal";
+import { BaseCardImage } from "@/components/common/BaseCardImage";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -133,6 +134,14 @@ export function ExperienceDetailModal({
   const canGoForward = availableMonths.size > 0 && 
     Array.from(availableMonths).some((m) => m > format(currentMonth, "yyyy-MM"));
 
+  // Reset step when modal closes
+  useEffect(() => {
+    if (!experience) {
+      setStep("detail");
+      setSelectedDateId(null);
+    }
+  }, [experience]);
+
   if (!experience) return null;
 
   const handleBook = async () => {
@@ -188,275 +197,236 @@ export function ExperienceDetailModal({
   };
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center"
-        onClick={onClose}
-      >
-        <motion.div
-          initial={{ opacity: 0, y: "100%" }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: "100%" }}
-          transition={{ type: "spring", damping: 25, stiffness: 300 }}
-          className="bg-background w-full sm:max-w-lg max-h-[95vh] sm:max-h-[90vh] overflow-hidden rounded-t-3xl sm:rounded-3xl"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {step === "detail" ? (
-            /* DETAIL VIEW */
-            <div className="flex flex-col max-h-[95vh] sm:max-h-[90vh]">
-              {/* Close button */}
-              <div className="absolute top-4 right-4 z-10">
-                <button
-                  onClick={onClose}
-                  className="w-8 h-8 rounded-full bg-background/90 backdrop-blur-sm flex items-center justify-center hover:bg-background transition-colors shadow-sm"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
+    <BaseModal
+      open={!!experience}
+      onClose={onClose}
+      showBackButton={step === "dates"}
+      onBack={handleBackToDetail}
+      title={step === "dates" ? "Seleziona una data" : undefined}
+    >
+      {step === "detail" ? (
+        /* DETAIL VIEW */
+        <div className="flex flex-col max-h-[95vh] sm:max-h-[90vh]">
+          {/* Close button overlay */}
+          <div className="absolute top-4 right-4 z-10">
+            <ModalCloseButton onClick={onClose} />
+          </div>
 
-              {/* Scrollable content */}
-              <div className="flex-1 overflow-y-auto">
-                {/* Square Image */}
-                <div className="relative aspect-square w-full">
-                  {experience.image_url ? (
+          {/* Scrollable content */}
+          <div className="flex-1 overflow-y-auto">
+            {/* Square Image */}
+            <BaseCardImage
+              imageUrl={experience.image_url}
+              alt={experience.title}
+              aspectRatio="square"
+              fallbackEmoji="🤝"
+              className="rounded-none"
+            />
+
+            {/* Content */}
+            <div className="p-5 space-y-4">
+              {/* Category badge */}
+              {experience.category && (
+                <Badge variant="secondary" className="rounded-full">
+                  {experience.category}
+                </Badge>
+              )}
+
+              {/* Title */}
+              <h2 className="text-xl font-bold text-foreground leading-tight">
+                {experience.title}
+              </h2>
+
+              {/* Description */}
+              {experience.description && (
+                <p className="text-[15px] text-muted-foreground font-light leading-relaxed">
+                  {experience.description}
+                </p>
+              )}
+
+              {/* Association */}
+              {experience.association_name && (
+                <div className="flex items-center gap-2 pt-2">
+                  {experience.association_logo_url ? (
                     <img
-                      src={experience.image_url}
-                      alt={experience.title}
-                      className="w-full h-full object-cover"
+                      src={experience.association_logo_url}
+                      alt=""
+                      className="w-8 h-8 rounded-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full bg-muted flex items-center justify-center">
-                      <span className="text-7xl">🤝</span>
+                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                      <span className="text-sm">🏢</span>
                     </div>
                   )}
-                </div>
-
-                {/* Content */}
-                <div className="p-5 space-y-4">
-                  {/* Category badge */}
-                  {experience.category && (
-                    <Badge variant="secondary" className="rounded-full">
-                      {experience.category}
-                    </Badge>
-                  )}
-
-                  {/* Title */}
-                  <h2 className="text-xl font-bold text-foreground leading-tight">
-                    {experience.title}
-                  </h2>
-
-                  {/* Description */}
-                  {experience.description && (
-                    <p className="text-[15px] text-muted-foreground font-light leading-relaxed">
-                      {experience.description}
+                  <div>
+                    <p className="text-sm font-medium text-foreground">
+                      {experience.association_name}
                     </p>
-                  )}
+                    <p className="text-xs text-muted-foreground">Associazione partner</p>
+                  </div>
+                </div>
+              )}
 
-                  {/* Association */}
-                  {experience.association_name && (
-                    <div className="flex items-center gap-2 pt-2">
-                      {experience.association_logo_url ? (
-                        <img
-                          src={experience.association_logo_url}
-                          alt=""
-                          className="w-8 h-8 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                          <span className="text-sm">🏢</span>
+              {/* Address */}
+              {(experience.city || experience.address) && (
+                <div className="flex items-start gap-2 pt-2">
+                  <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                  <p className="text-sm text-muted-foreground">
+                    {experience.address && `${experience.address}, `}
+                    {experience.city}
+                  </p>
+                </div>
+              )}
+
+              {/* SDGs */}
+              {experience.sdgs && experience.sdgs.length > 0 && (
+                <div className="pt-3 space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    Obiettivi di sostenibilità
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {experience.sdgs.map((sdgCode) => {
+                      const sdg = SDG_DATA[sdgCode];
+                      if (!sdg) return null;
+                      return (
+                        <div
+                          key={sdgCode}
+                          className="flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium"
+                          style={{ 
+                            backgroundColor: `${sdg.color}15`,
+                            color: sdg.color 
+                          }}
+                        >
+                          <span>{sdg.icon}</span>
+                          <span>{sdg.name}</span>
                         </div>
-                      )}
-                      <div>
-                        <p className="text-sm font-medium text-foreground">
-                          {experience.association_name}
-                        </p>
-                        <p className="text-xs text-muted-foreground">Associazione partner</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Address */}
-                  {(experience.city || experience.address) && (
-                    <div className="flex items-start gap-2 pt-2">
-                      <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                      <p className="text-sm text-muted-foreground">
-                        {experience.address && `${experience.address}, `}
-                        {experience.city}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* SDGs */}
-                  {experience.sdgs && experience.sdgs.length > 0 && (
-                    <div className="pt-3 space-y-2">
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                        Obiettivi di sostenibilità
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {experience.sdgs.map((sdgCode) => {
-                          const sdg = SDG_DATA[sdgCode];
-                          if (!sdg) return null;
-                          return (
-                            <div
-                              key={sdgCode}
-                              className="flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium"
-                              style={{ 
-                                backgroundColor: `${sdg.color}15`,
-                                color: sdg.color 
-                              }}
-                            >
-                              <span>{sdg.icon}</span>
-                              <span>{sdg.name}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-
-              {/* Fixed footer with CTA */}
-              <div className="flex-shrink-0 p-5 border-t border-border bg-background">
-                <Button 
-                  onClick={handleShowDates}
-                  className="w-full h-12 text-base font-medium rounded-xl"
-                >
-                  Vedi date disponibili
-                </Button>
-              </div>
+              )}
             </div>
-          ) : (
-            /* DATE SELECTION VIEW */
-            <div className="flex flex-col max-h-[95vh] sm:max-h-[90vh]">
-              {/* Header */}
-              <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-border">
-                <button
-                  onClick={handleBackToDetail}
-                  className="w-8 h-8 rounded-full hover:bg-muted flex items-center justify-center transition-colors"
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </button>
-                <h3 className="text-lg font-semibold">Seleziona una data</h3>
-                <button
-                  onClick={onClose}
-                  className="w-8 h-8 rounded-full hover:bg-muted flex items-center justify-center transition-colors"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
+          </div>
 
-              {/* Month navigation */}
-              <div className="flex-shrink-0 flex items-center justify-between px-5 py-4 border-b border-border">
-                <button
-                  onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-                  disabled={!canGoBack}
-                  className="w-8 h-8 rounded-full hover:bg-muted flex items-center justify-center transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </button>
-                <span className="text-base font-semibold capitalize">
-                  {format(currentMonth, "MMMM yyyy", { locale: it })}
-                </span>
-                <button
-                  onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-                  disabled={!canGoForward}
-                  className="w-8 h-8 rounded-full hover:bg-muted flex items-center justify-center transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                >
-                  <ChevronRight className="h-5 w-5" />
-                </button>
-              </div>
+          {/* Fixed footer with CTA */}
+          <div className="flex-shrink-0 p-5 border-t border-border bg-background">
+            <Button 
+              onClick={handleShowDates}
+              className="w-full h-12 text-base font-medium rounded-xl"
+            >
+              Vedi date disponibili
+            </Button>
+          </div>
+        </div>
+      ) : (
+        /* DATE SELECTION VIEW */
+        <div className="flex flex-col max-h-[95vh] sm:max-h-[90vh]">
+          {/* Month navigation */}
+          <div className="flex-shrink-0 flex items-center justify-between px-5 py-4 border-b border-border">
+            <button
+              onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+              disabled={!canGoBack}
+              className="w-8 h-8 rounded-full hover:bg-muted flex items-center justify-center transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <span className="text-base font-semibold capitalize">
+              {format(currentMonth, "MMMM yyyy", { locale: it })}
+            </span>
+            <button
+              onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+              disabled={!canGoForward}
+              className="w-8 h-8 rounded-full hover:bg-muted flex items-center justify-center transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+          </div>
 
-              {/* Scrollable date slots */}
-              <div className="flex-1 overflow-y-auto p-5 space-y-6">
-                {loadingDates ? (
-                  <div className="space-y-4">
-                    {[1, 2, 3].map((i) => (
-                      <div key={i} className="space-y-2">
-                        <Skeleton className="h-5 w-32" />
-                        <Skeleton className="h-16 w-full rounded-xl" />
-                      </div>
-                    ))}
+          {/* Scrollable date slots */}
+          <div className="flex-1 overflow-y-auto p-5 space-y-6">
+            {loadingDates ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="space-y-2">
+                    <Skeleton className="h-5 w-32" />
+                    <Skeleton className="h-16 w-full rounded-xl" />
                   </div>
-                ) : datesByDay.size > 0 ? (
-                  Array.from(datesByDay.entries()).map(([dayKey, dayDates]) => (
-                    <div key={dayKey} className="space-y-3">
-                      {/* Day header */}
-                      <h4 className="text-base font-semibold text-foreground">
-                        {format(new Date(dayKey), "EEEE, d MMMM", { locale: it })}
-                      </h4>
+                ))}
+              </div>
+            ) : datesByDay.size > 0 ? (
+              Array.from(datesByDay.entries()).map(([dayKey, dayDates]) => (
+                <div key={dayKey} className="space-y-3">
+                  {/* Day header */}
+                  <h4 className="text-base font-semibold text-foreground">
+                    {format(new Date(dayKey), "EEEE, d MMMM", { locale: it })}
+                  </h4>
 
-                      {/* Time slots for this day */}
-                      <div className="space-y-2">
-                        {dayDates.map((date) => {
-                          const availableSpots = date.max_participants - (date.confirmed_count || 0);
-                          const isFull = availableSpots <= 0;
-                          const isSelected = selectedDateId === date.id;
+                  {/* Time slots for this day */}
+                  <div className="space-y-2">
+                    {dayDates.map((date) => {
+                      const availableSpots = date.max_participants - (date.confirmed_count || 0);
+                      const isFull = availableSpots <= 0;
+                      const isSelected = selectedDateId === date.id;
 
-                          return (
-                            <button
-                              key={date.id}
-                              disabled={isFull}
-                              onClick={() => setSelectedDateId(date.id)}
-                              className={`
-                                w-full p-4 rounded-2xl border text-left transition-all
-                                ${isSelected
-                                  ? "border-primary bg-primary/5 ring-1 ring-primary"
-                                  : "border-border hover:bg-muted/30"
-                                }
-                                ${isFull ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
-                              `}
-                            >
-                              <div className="flex items-center justify-between">
-                                <div>
-                                  <p className="text-base font-medium text-foreground">
-                                    {format(new Date(date.start_datetime), "HH:mm")}–
-                                    {format(new Date(date.end_datetime), "HH:mm")}
-                                  </p>
-                                </div>
-                                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                  <Users className="h-4 w-4" />
-                                  <span className={isFull ? "text-destructive font-medium" : ""}>
-                                    {isFull ? "Completo" : `${availableSpots} posti`}
-                                  </span>
-                                </div>
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center py-8">
-                    <p className="text-muted-foreground">
-                      Nessuna data disponibile in questo mese
-                    </p>
+                      return (
+                        <button
+                          key={date.id}
+                          disabled={isFull}
+                          onClick={() => setSelectedDateId(date.id)}
+                          className={`
+                            w-full p-4 rounded-2xl border text-left transition-all
+                            ${isSelected
+                              ? "border-primary bg-primary/5 ring-1 ring-primary"
+                              : "border-border hover:bg-muted/30"
+                            }
+                            ${isFull ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
+                          `}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-base font-medium text-foreground">
+                                {format(new Date(date.start_datetime), "HH:mm")}–
+                                {format(new Date(date.end_datetime), "HH:mm")}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                              <Users className="h-4 w-4" />
+                              <span className={isFull ? "text-destructive font-medium" : ""}>
+                                {isFull ? "Completo" : `${availableSpots} posti`}
+                              </span>
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
-                )}
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">
+                  Nessuna data disponibile in questo mese
+                </p>
               </div>
+            )}
+          </div>
 
-              {/* Fixed footer with confirm button */}
-              <div className="flex-shrink-0 p-5 border-t border-border bg-background">
-                <Button
-                  onClick={handleBook}
-                  disabled={!selectedDateId || isBooking}
-                  className="w-full h-12 text-base font-medium rounded-xl"
-                >
-                  {isBooking ? (
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                  ) : (
-                    "Conferma prenotazione"
-                  )}
-                </Button>
-              </div>
-            </div>
-          )}
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
+          {/* Fixed footer with confirm button */}
+          <div className="flex-shrink-0 p-5 border-t border-border bg-background">
+            <Button
+              onClick={handleBook}
+              disabled={!selectedDateId || isBooking}
+              className="w-full h-12 text-base font-medium rounded-xl"
+            >
+              {isBooking ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                "Conferma prenotazione"
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
+    </BaseModal>
   );
 }

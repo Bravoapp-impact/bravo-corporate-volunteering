@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Users, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { BaseCardImage } from "@/components/common/BaseCardImage";
 import { format, differenceInMinutes } from "date-fns";
 import { it } from "date-fns/locale";
 
@@ -50,30 +51,23 @@ export function ExperienceCardCompact({ experience, index, onSelect }: Experienc
       onClick={() => onSelect(experience)}
       className="group flex-shrink-0 w-[165px] sm:w-[185px] md:w-[210px] text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-2xl"
     >
-      {/* Square Image */}
-      <div className="relative aspect-square rounded-2xl overflow-hidden bg-muted">
-        {experience.image_url ? (
-          <img
-            src={experience.image_url}
-            alt={experience.title}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-muted">
-            <span className="text-4xl">🤝</span>
-          </div>
-        )}
-        
-        {/* Category badge - more rounded */}
-        {experience.category && (
-          <Badge
-            variant="secondary"
-            className="absolute top-3 left-3 text-xs font-medium bg-white/95 text-foreground backdrop-blur-sm rounded-full px-3 py-1 shadow-sm"
-          >
-            {experience.category}
-          </Badge>
-        )}
-      </div>
+      {/* Square Image with category badge */}
+      <BaseCardImage
+        imageUrl={experience.image_url}
+        alt={experience.title}
+        aspectRatio="square"
+        badge={
+          experience.category ? (
+            <Badge
+              variant="secondary"
+              className="text-xs font-medium bg-white/95 text-foreground backdrop-blur-sm rounded-full px-3 py-1 shadow-sm"
+            >
+              {experience.category}
+            </Badge>
+          ) : null
+        }
+        badgePosition="top-left"
+      />
 
       {/* Content */}
       <div className="pt-3 space-y-1.5">
