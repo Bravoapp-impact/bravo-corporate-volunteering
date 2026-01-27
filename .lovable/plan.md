@@ -1,319 +1,334 @@
 
-
-# Piano: Implementazione CRUD Table Pattern (Approccio Ibrido)
+# Piano: Armonizzazione Stile Cards e Modal Bookings
 
 ## Obiettivo
 
-Creare un set di componenti riutilizzabili e un hook che:
-- Riducano il boilerplate nelle pagine CRUD (~150-200 righe/pagina)
-- Mantengano piena flessibilita per casi complessi
-- Non rompano le pagine esistenti (refactoring opzionale)
-- Permettano di aggiungere nuovi componenti in futuro
+Uniformare lo stile visivo della pagina `/app/bookings` a quello della pagina `/app/experiences`, creando componenti base riutilizzabili per evitare duplicazioni di codice future.
 
 ---
 
-## Struttura File da Creare
+## Analisi delle Differenze Attuali
+
+### Cards
+
+| Aspetto | ExperienceCardCompact | BookingCard (attuale) |
+|---------|----------------------|----------------------|
+| Immagine | Quadrata, rounded-2xl | Rettangolare h-32, badge data overlay |
+| Layout | Verticale compatto | Verticale con più elementi |
+| Info | Titolo, associazione+logo, data/durata/posti | Categoria, titolo, orario, location, CTA cancella |
+| Animazione | motion.button, hover su titolo | motion.div, hover scale su immagine |
+| Past state | Non esiste | Riga compatta orizzontale |
+
+### Modal
+
+| Aspetto | ExperienceDetailModal | BookingDetailModal (attuale) |
+|---------|----------------------|------------------------------|
+| Posizione | Bottom sheet mobile, centered desktop | Sempre centered |
+| Corners | rounded-3xl | rounded-2xl |
+| Background | bg-background | bg-card |
+| Immagine | Square aspect-ratio | Fixed h-48 |
+| Close button | In-image corner | In-image corner |
+| Contenuto | Due step (detail, dates) | Single view con tips |
+
+---
+
+## Strategia di Implementazione
+
+### Fase 1: Componenti Base Riutilizzabili
+
+Creare due componenti astratti in `src/components/common/`:
+
+#### 1.1 `BaseCardImage.tsx`
+Componente per la gestione uniforme delle immagini nelle card.
 
 ```text
-src/hooks/
-  useCrudState.ts          <- Hook per stato e operazioni CRUD
-
-src/components/crud/
-  index.ts                 <- Export centralizzato
-  DeleteConfirmDialog.tsx  <- Dialog eliminazione universale
-  CrudTableCard.tsx        <- Card wrapper con header e search
-  CrudTableActions.tsx     <- Bottoni Edit/Delete standardizzati
-  CrudTableRow.tsx         <- Row wrapper con animazione
-  CrudSearchBar.tsx        <- Barra ricerca con icona
-  TableEmptyRow.tsx        <- Empty state per tabelle
-  TableLoadingRow.tsx      <- Loading state per tabelle
+Props:
+  - imageUrl: string | null
+  - alt: string
+  - aspectRatio?: "square" | "video" | "portrait"  // default: "square"
+  - fallbackEmoji?: string                          // default: "🤝"
+  - badge?: ReactNode                               // overlay badge (categoria, data, etc.)
+  - className?: string
 ```
 
----
+**Caratteristiche:**
+- Gestione fallback con emoji
+- Supporto per overlay badges
+- Transizione hover uniforme (scale-105)
+- Rounded-2xl standard
 
-## Fase 1: Componenti Base (Quick Wins)
-
-### 1.1 DeleteConfirmDialog
-
-Dialog di conferma eliminazione, identico in tutte le 6 pagine CRUD.
+#### 1.2 `BaseModal.tsx`
+Componente wrapper per modal in stile Airbnb/bottom-sheet.
 
 ```text
 Props:
   - open: boolean
-  - onOpenChange: (open: boolean) => void
-  - onConfirm: () => void
-  - title?: string           // default: "Eliminare questo elemento?"
-  - description?: string     // default: "Questa azione non puo essere annullata..."
-  - entityName?: string      // es. "citta" - usato nel messaggio
-  - entityLabel?: string     // es. "Milano" - nome specifico
-  - confirmLabel?: string    // default: "Elimina"
-  - cancelLabel?: string     // default: "Annulla"
-```
-
-Riduzione: ~25 righe per pagina
-
-### 1.2 CrudTableActions
-
-Bottoni Edit/Delete standardizzati per le celle azioni.
-
-```text
-Props:
-  - onEdit?: () => void
-  - onDelete?: () => void
-  - showEdit?: boolean       // default: true
-  - showDelete?: boolean     // default: true
-  - size?: "sm" | "default"  // default: "sm" (h-8 w-8)
-  - className?: string
-```
-
-Riduzione: ~20 righe per pagina
-
-### 1.3 CrudTableRow
-
-Wrapper per motion.tr con animazione standard.
-
-```text
-Props:
-  - index: number            // per calcolo delay animazione
+  - onClose: () => void
   - children: ReactNode
+  - showBackButton?: boolean
+  - onBack?: () => void
+  - title?: string                // header title (quando presente)
   - className?: string
 ```
 
-Riduzione: ~5 righe per riga (moltiplicato per numero righe)
+**Caratteristiche:**
+- Bottom sheet su mobile (y: 100%), centered su desktop
+- rounded-t-3xl mobile, rounded-3xl desktop
+- bg-background uniforme
+- Gestione header con back/close buttons
+- max-h-[95vh] mobile, max-h-[90vh] desktop
 
 ---
 
-## Fase 2: Componenti Strutturali
+### Fase 2: Refactoring BookingCard
 
-### 2.1 CrudSearchBar
+#### 2.1 `BookingCardCompact.tsx` (Future bookings - stile Airbnb)
 
-Barra ricerca con icona Search integrata.
+Nuova versione della card per prenotazioni future, ispirata a `ExperienceCardCompact`:
 
 ```text
-Props:
-  - value: string
-  - onChange: (value: string) => void
-  - placeholder?: string     // default: "Cerca..."
-  - className?: string
+Layout:
+  - Immagine quadrata con badge data (top-left)
+  - Titolo (max 2 righe, line-clamp-2)
+  - Associazione con logo circolare
+  - Info: Orario + Durata + Location
+  - Badge stato se cancelled
+  - Tap per dettaglio
 ```
 
-### 2.2 CrudTableCard
+**Differenze rispetto a ExperienceCardCompact:**
+- Badge data overlay invece di categoria
+- Mostra orario invece di posti disponibili
+- Bottone cancellazione nel modal, non nella card
 
-Card wrapper con header, conteggio, search e slot per filtri.
+#### 2.2 `BookingCardPast.tsx` (Past bookings)
 
-```text
-Props:
-  - title: string            // es. "12 Citta"
-  - searchValue: string
-  - onSearchChange: (v: string) => void
-  - searchPlaceholder?: string
-  - filters?: ReactNode      // slot per Select aggiuntivi
-  - actions?: ReactNode      // slot per bottoni header
-  - children: ReactNode      // la Table
-  - className?: string
-```
+Mantenere layout riga compatta attuale (gia in stile corretto).
 
-Riduzione: ~35 righe per pagina
+---
 
-### 2.3 TableEmptyRow
+### Fase 3: Refactoring BookingDetailModal
 
-Empty state specifico per tabelle (usa EmptyState internamente).
+Aggiornare `BookingDetailModal.tsx` per usare:
 
-```text
-Props:
-  - colSpan: number
-  - icon?: LucideIcon
-  - message?: string         // default: "Nessun elemento trovato"
-  - description?: string
-```
+1. **BaseModal** come wrapper (bottom-sheet style)
+2. **Immagine quadrata** come ExperienceDetailModal
+3. **Layout contenuto allineato** con sezioni:
+   - Badge categoria + status
+   - Titolo
+   - Data/orario (card highlight)
+   - Location con link Maps
+   - Descrizione (se disponibile)
+   - Tips section (mantenere - gia presente)
+   - CTA Annulla (se possibile) + Chiudi
 
-### 2.4 TableLoadingRow
+---
 
-Loading state specifico per tabelle.
+## Struttura File
 
 ```text
-Props:
-  - colSpan: number
-  - message?: string         // default: "Caricamento..."
+src/components/common/
+  BaseCardImage.tsx      <- NUOVO
+  BaseModal.tsx          <- NUOVO
+  EmptyState.tsx         (esistente)
+  LoadingState.tsx       (esistente)
+  MetricCard.tsx         (esistente)
+  PageHeader.tsx         (esistente)
+
+src/components/bookings/
+  BookingCard.tsx        <- REFACTOR (usa BaseCardImage)
+  BookingDetailModal.tsx <- REFACTOR (usa BaseModal)
 ```
 
 ---
 
-## Fase 3: Hook useCrudState
+## Dettaglio Implementazione
 
-Hook generico per stato e operazioni CRUD.
+### BaseCardImage.tsx
 
 ```text
-useCrudState<T>({
-  tableName: string,
-  orderBy?: { column: string, ascending?: boolean },
-  searchFields?: (keyof T)[],
-  fetchOnMount?: boolean,    // default: true
-})
+Rendering:
+  <div className="relative {aspectRatio} rounded-2xl overflow-hidden bg-muted">
+    {imageUrl ? (
+      <img className="w-full h-full object-cover transition-transform 
+                     duration-300 group-hover:scale-105" />
+    ) : (
+      <div className="fallback emoji centered" />
+    )}
+    {badge && (
+      <div className="absolute positioning">{badge}</div>
+    )}
+  </div>
 
-Restituisce:
-  items: T[]
-  loading: boolean
-  searchTerm: string
-  setSearchTerm: (v: string) => void
-  selectedItem: T | null
-  setSelectedItem: (item: T | null) => void
-  dialogOpen: boolean
-  setDialogOpen: (open: boolean) => void
-  deleteDialogOpen: boolean
-  setDeleteDialogOpen: (open: boolean) => void
-  saving: boolean
-  fetchItems: () => Promise<void>
-  handleSave: (payload: Partial<T>, onSuccess?: () => void) => Promise<void>
-  handleDelete: (onSuccess?: () => void) => Promise<void>
-  filteredItems: T[]
+Aspect Ratio Classes:
+  - square: aspect-square
+  - video: aspect-video
+  - portrait: aspect-[3/4]
 ```
 
-Riduzione: ~60-80 righe per pagina
-
----
-
-## Piano di Migrazione
-
-### Pagine da Refactorare (in ordine di complessita)
-
-| Pagina | Righe Attuali | Complessita | Ordine |
-|--------|---------------|-------------|--------|
-| CitiesPage | 400 | Bassa | 1 |
-| CategoriesPage | 450 | Bassa | 2 |
-| CompaniesPage | ~500 | Media | 3 |
-| AssociationsPage | ~700 | Media | 4 |
-| UsersPage | ~600 | Media | 5 |
-| AccessCodesPage | 870 | Alta | 6 (opzionale) |
-
-### Strategia
-
-1. Creare tutti i componenti CRUD
-2. Refactorare CitiesPage come proof-of-concept
-3. Se funziona, procedere con le altre pagine
-4. AccessCodesPage puo rimanere com'e (troppo custom) o usare solo alcuni componenti
-
----
-
-## Esempio: CitiesPage Refactored
+### BaseModal.tsx
 
 ```text
-// Da ~400 righe a ~180 righe
-
-export default function CitiesPage() {
-  const {
-    items: cities,
-    loading,
-    searchTerm, setSearchTerm,
-    selectedItem, setSelectedItem,
-    dialogOpen, setDialogOpen,
-    deleteDialogOpen, setDeleteDialogOpen,
-    saving,
-    handleSave,
-    handleDelete,
-    filteredItems,
-  } = useCrudState<City>({
-    tableName: "cities",
-    orderBy: { column: "name" },
-    searchFields: ["name", "province", "region"],
-  });
-
-  const [formData, setFormData] = useState({ name: "", province: "", region: "" });
-
-  const handleOpenDialog = (city?: City) => {
-    // ... logica form (resta custom)
-  };
-
-  return (
-    <SuperAdminLayout>
-      <PageHeader
-        title="Citta"
-        description="Gestisci le citta dove operiamo"
-        actions={<Button onClick={() => handleOpenDialog()}>Nuova Citta</Button>}
-      />
-
-      <CrudTableCard
-        title={`${cities.length} Citta`}
-        searchValue={searchTerm}
-        onSearchChange={setSearchTerm}
+Struttura:
+  <AnimatePresence>
+    <motion.div backdrop onClick={onClose}>
+      <motion.div 
+        modal-container
+        initial={{ y: "100%" }}  // bottom sheet mobile
+        animate={{ y: 0 }}
+        className="bg-background w-full sm:max-w-lg 
+                   rounded-t-3xl sm:rounded-3xl"
       >
-        <Table>
-          <TableHeader>...</TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableLoadingRow colSpan={4} />
-            ) : filteredItems.length === 0 ? (
-              <TableEmptyRow colSpan={4} icon={MapPin} message="Nessuna citta trovata" />
-            ) : (
-              filteredItems.map((city, index) => (
-                <CrudTableRow key={city.id} index={index}>
-                  <TableCell>...</TableCell>
-                  <TableCell>
-                    <CrudTableActions
-                      onEdit={() => handleOpenDialog(city)}
-                      onDelete={() => {
-                        setSelectedItem(city);
-                        setDeleteDialogOpen(true);
-                      }}
-                    />
-                  </TableCell>
-                </CrudTableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </CrudTableCard>
+        {/* Optional header with back/close */}
+        {(showBackButton || title) && (
+          <div className="header flex items-center justify-between">
+            {showBackButton && <BackButton />}
+            {title && <h3>{title}</h3>}
+            <CloseButton />
+          </div>
+        )}
+        
+        {/* Content slot */}
+        {children}
+      </motion.div>
+    </motion.div>
+  </AnimatePresence>
+```
 
-      {/* Dialog form - resta custom */}
-      <Dialog>...</Dialog>
+### BookingCard.tsx (Refactored)
 
-      <DeleteConfirmDialog
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-        onConfirm={handleDelete}
-        entityName="citta"
-        entityLabel={selectedItem?.name}
+```text
+Future Booking Card:
+  <motion.button onClick={() => onView(booking)} className="...">
+    <BaseCardImage
+      imageUrl={experience.image_url}
+      alt={experience.title}
+      aspectRatio="square"
+      badge={
+        <div className="date-badge">
+          {format(startDate, "MMM")} / {format(startDate, "d")}
+        </div>
+      }
+    />
+    <div className="content pt-3 space-y-1.5">
+      <h3 className="title line-clamp-2">{experience.title}</h3>
+      <AssociationWithLogo />
+      <InfoRow: orario + durata + citta />
+    </div>
+  </motion.button>
+
+Past Booking (invariato):
+  <motion.div className="flex items-center gap-4 p-4 rounded-xl...">
+    ...layout riga esistente...
+  </motion.div>
+```
+
+### BookingDetailModal.tsx (Refactored)
+
+```text
+<BaseModal open={!!booking} onClose={onClose}>
+  <div className="flex flex-col max-h-[95vh] sm:max-h-[90vh]">
+    {/* Close button overlay */}
+    <CloseButton absolute />
+    
+    {/* Scrollable content */}
+    <div className="flex-1 overflow-y-auto">
+      {/* Square Image */}
+      <BaseCardImage
+        imageUrl={experience.image_url}
+        aspectRatio="square"
+        badge={booking.status === "cancelled" && <Badge>Annullata</Badge>}
       />
-    </SuperAdminLayout>
-  );
-}
+      
+      {/* Content sections - aligned with ExperienceDetailModal */}
+      <div className="p-5 space-y-4">
+        <Badge>{experience.category}</Badge>
+        <h2>{experience.title}</h2>
+        
+        {/* Date/Time highlight card */}
+        <div className="p-4 rounded-xl bg-primary/5">
+          <Calendar /> {fullDate}
+          <Clock /> {startTime} - {endTime}
+        </div>
+        
+        {/* Location with Maps link */}
+        <LocationSection />
+        
+        {/* Description if available */}
+        {experience.description && <Description />}
+        
+        {/* Tips section - mantenere esistente */}
+        <TipsSection />
+      </div>
+    </div>
+    
+    {/* Fixed footer */}
+    <div className="p-5 border-t bg-background">
+      {canCancel ? (
+        <Button variant="destructive">Annulla prenotazione</Button>
+      ) : (
+        <Button onClick={onClose}>Chiudi</Button>
+      )}
+    </div>
+  </div>
+</BaseModal>
 ```
 
 ---
 
-## Estensibilita Futura
+## Riuso dei Componenti Base
 
-L'architettura permette di aggiungere facilmente:
+Una volta creati `BaseCardImage` e `BaseModal`, potranno essere usati anche per:
 
-| Componente Futuro | Come si integra |
-|-------------------|-----------------|
-| BulkSelectCheckbox | Nuovo componente, usato in TableCell |
-| BulkActionsBar | Slot in CrudTableCard |
-| ExportButton | Slot `actions` in CrudTableCard |
-| InlineEditCell | Sostituisce TableCell standard |
-| ColumnSorter | Nuovo componente in TableHead |
-| Pagination | Nuovo componente sotto Table |
+| Componente Esistente | Refactoring Possibile |
+|---------------------|----------------------|
+| ExperienceCardCompact | Usare BaseCardImage |
+| ExperienceCard | Usare BaseCardImage |
+| ExperienceDetailModal | Usare BaseModal |
+| HRExperienceCard | Usare BaseCardImage |
+
+Questo porta a un risparmio stimato di ~150-200 righe duplicate e garantisce coerenza visiva.
 
 ---
 
-## Riepilogo Implementazione
+## Ordine di Implementazione
 
-| Fase | Componenti | Righe Salvate | Tempo Stimato |
-|------|------------|---------------|---------------|
-| 1 | DeleteConfirmDialog, CrudTableActions, CrudTableRow | ~50/pagina | Veloce |
-| 2 | CrudTableCard, CrudSearchBar, TableEmptyRow, TableLoadingRow | ~45/pagina | Veloce |
-| 3 | useCrudState hook | ~70/pagina | Medio |
-| Refactor | Migrazione pagine | - | Incrementale |
-
-**Totale stimato**: ~165 righe risparmiate per pagina = ~990 righe su 6 pagine
+| Step | Azione | File |
+|------|--------|------|
+| 1 | Creare BaseCardImage | src/components/common/BaseCardImage.tsx |
+| 2 | Creare BaseModal | src/components/common/BaseModal.tsx |
+| 3 | Refactorare BookingCard | src/components/bookings/BookingCard.tsx |
+| 4 | Refactorare BookingDetailModal | src/components/bookings/BookingDetailModal.tsx |
+| 5 | Test visivo su /app/bookings | - |
+| 6 | (Opzionale) Refactorare ExperienceCardCompact | Per usare BaseCardImage |
 
 ---
 
 ## Note Tecniche
 
-- Tutti i componenti in `src/components/crud/`
-- Export centralizzato via `index.ts`
-- Compatibilita con componenti esistenti (`PageHeader`, `EmptyState`, `LoadingState`)
-- Documentazione in `docs/design-system.md` dopo completamento
-- I form restano completamente custom per massima flessibilita
+- `BaseCardImage` e `BaseModal` vanno in `src/components/common/` insieme agli altri componenti riutilizzabili
+- Mantenere retrocompatibilita: le card past bookings rimangono con layout riga
+- Il bottone "Annulla prenotazione" si sposta dalla card al modal per un'interfaccia piu pulita
+- Z-index BaseModal: z-[100] come ExperienceDetailModal
 
+---
+
+## Preview Atteso
+
+Dopo il refactoring, la pagina `/app/bookings` avra:
+
+**Cards prenotazioni future:**
+- Immagine quadrata con angoli arrotondati
+- Badge data in alto a sinistra (stile calendario)
+- Titolo + associazione con logo
+- Info compatte (orario, durata, location)
+- Tap apre modal dettaglio
+
+**Modal dettaglio:**
+- Bottom sheet su mobile
+- Immagine grande quadrata
+- Contenuto allineato a ExperienceDetailModal
+- CTA Annulla nel footer (non nella card)
+
+**Cards prenotazioni passate:**
+- Mantengono layout riga compatta (gia appropriato)
