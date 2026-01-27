@@ -1,9 +1,9 @@
 import { motion } from "framer-motion";
-import { MapPin, Calendar, Clock, X, ChevronRight } from "lucide-react";
-import { format, differenceInHours } from "date-fns";
+import { MapPin, Clock, ChevronRight } from "lucide-react";
+import { format, differenceInHours, differenceInMinutes } from "date-fns";
 import { it } from "date-fns/locale";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { BaseCardImage } from "@/components/common/BaseCardImage";
 
 interface BookingCardProps {
   booking: {
@@ -19,6 +19,7 @@ interface BookingCardProps {
         title: string;
         image_url: string | null;
         association_name: string | null;
+        association_logo_url?: string | null;
         city: string | null;
         address: string | null;
         category: string | null;
@@ -36,16 +37,17 @@ export function BookingCard({
   booking,
   index,
   isPast = false,
-  onCancel,
   onView,
-  isCancelling,
 }: BookingCardProps) {
   const experience = booking.experience_dates.experiences;
   const startDate = new Date(booking.experience_dates.start_datetime);
   const endDate = new Date(booking.experience_dates.end_datetime);
-  const hoursUntilEvent = differenceInHours(startDate, new Date());
-  const canCancel = hoursUntilEvent > 48 && booking.status === "confirmed";
 
+  // Calculate duration
+  const durationMinutes = differenceInMinutes(endDate, startDate);
+  const durationHours = Math.round(durationMinutes / 60);
+
+  // Past booking - compact horizontal layout
   if (isPast) {
     return (
       <motion.div
@@ -53,10 +55,20 @@ export function BookingCard({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: index * 0.05 }}
         onClick={() => onView(booking)}
-        className="flex items-center gap-4 p-4 rounded-xl bg-muted/30 border border-border/30 cursor-pointer hover:bg-muted/50 transition-colors"
+        className="group flex items-center gap-4 p-4 rounded-xl bg-muted/30 border border-border/30 cursor-pointer hover:bg-muted/50 transition-colors"
       >
-        <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
-          <Calendar className="h-5 w-5 text-muted-foreground" />
+        <div className="w-12 h-12 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+          {experience.image_url ? (
+            <img
+              src={experience.image_url}
+              alt={experience.title}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <span className="text-lg">🤝</span>
+            </div>
+          )}
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-medium text-muted-foreground truncate">
@@ -76,105 +88,90 @@ export function BookingCard({
     );
   }
 
+  // Future booking - Airbnb-style card
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
+    <motion.button
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: index * 0.1 }}
-      className="group bg-card rounded-2xl overflow-hidden border border-border transition-all duration-300 hover:shadow-md cursor-pointer"
+      transition={{ duration: 0.3, delay: index * 0.05 }}
       onClick={() => onView(booking)}
+      className="group w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-2xl"
     >
-      {/* Image header */}
-      <div className="relative h-32 overflow-hidden">
-        {experience.image_url ? (
-          <img
-            src={experience.image_url}
-            alt={experience.title}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-          />
-        ) : (
-          <div className="w-full h-full bg-muted flex items-center justify-center">
-            <span className="text-4xl">🤝</span>
+      {/* Square Image with date badge */}
+      <BaseCardImage
+        imageUrl={experience.image_url}
+        alt={experience.title}
+        aspectRatio="square"
+        badge={
+          <div className="bg-background/95 backdrop-blur-sm rounded-lg px-3 py-2 text-center shadow-sm">
+            <p className="text-xs font-medium text-muted-foreground uppercase leading-none">
+              {format(startDate, "MMM", { locale: it })}
+            </p>
+            <p className="text-xl font-bold text-foreground leading-none mt-0.5">
+              {format(startDate, "d")}
+            </p>
+          </div>
+        }
+        badgePosition="top-left"
+      />
+
+      {/* Content */}
+      <div className="pt-3 space-y-1.5">
+        {/* Title */}
+        <h3 className="text-[15px] font-medium text-foreground line-clamp-2 leading-snug group-hover:text-primary transition-colors">
+          {experience.title}
+        </h3>
+
+        {/* Association with logo */}
+        {experience.association_name && (
+          <div className="flex items-center gap-1.5">
+            {experience.association_logo_url ? (
+              <img
+                src={experience.association_logo_url}
+                alt=""
+                className="w-4 h-4 rounded-full object-cover flex-shrink-0"
+              />
+            ) : (
+              <div className="w-4 h-4 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                <span className="text-[8px]">🏢</span>
+              </div>
+            )}
+            <p className="text-[13px] text-muted-foreground font-light truncate">
+              {experience.association_name}
+            </p>
           </div>
         )}
-        
-        {/* Date badge */}
-        <div className="absolute top-3 left-3 bg-background/95 backdrop-blur-sm rounded-lg px-3 py-2 text-center">
-          <p className="text-xs font-medium text-muted-foreground uppercase">
-            {format(startDate, "MMM", { locale: it })}
-          </p>
-          <p className="text-xl font-bold text-foreground leading-none">
-            {format(startDate, "d")}
-          </p>
+
+        {/* Time + Duration + Location */}
+        <div className="flex items-center gap-2 text-[13px] text-muted-foreground font-light">
+          <span className="flex items-center gap-0.5">
+            <Clock className="h-3 w-3" />
+            {format(startDate, "HH:mm")}
+          </span>
+          {durationHours > 0 && (
+            <>
+              <span className="text-border">·</span>
+              <span>{durationHours}h</span>
+            </>
+          )}
+          {experience.city && (
+            <>
+              <span className="text-border">·</span>
+              <span className="flex items-center gap-0.5 truncate">
+                <MapPin className="h-3 w-3 flex-shrink-0" />
+                <span className="truncate">{experience.city}</span>
+              </span>
+            </>
+          )}
         </div>
 
+        {/* Status badge if cancelled */}
         {booking.status === "cancelled" && (
-          <Badge variant="destructive" className="absolute top-3 right-3">
+          <Badge variant="destructive" className="mt-2">
             Annullata
           </Badge>
         )}
       </div>
-
-      {/* Content */}
-      <div className="p-5 space-y-3">
-        {/* Category & Association */}
-        <div className="flex items-center gap-2 flex-wrap">
-          {experience.category && (
-            <Badge variant="secondary" className="text-xs">
-              {experience.category}
-            </Badge>
-          )}
-          {experience.association_name && (
-            <span className="text-xs text-primary font-medium">
-              {experience.association_name}
-            </span>
-          )}
-        </div>
-
-        {/* Title */}
-        <h3 className="font-semibold text-lg text-foreground line-clamp-1">
-          {experience.title}
-        </h3>
-
-        {/* Time & Location */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Clock className="h-4 w-4 text-primary/70" />
-            <span>
-              {format(startDate, "HH:mm")} - {format(endDate, "HH:mm")}
-            </span>
-          </div>
-          {experience.city && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <MapPin className="h-4 w-4 text-primary/70" />
-              <span>{experience.city}</span>
-            </div>
-          )}
-        </div>
-
-        {/* Cancel button */}
-        {canCancel && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full mt-3 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
-            onClick={(e) => {
-              e.stopPropagation();
-              onCancel(booking.id);
-            }}
-            disabled={isCancelling}
-          >
-            <X className="h-4 w-4 mr-2" />
-            Annulla prenotazione
-          </Button>
-        )}
-
-        {!canCancel && booking.status === "confirmed" && hoursUntilEvent <= 48 && (
-          <p className="text-xs text-muted-foreground text-center mt-3 py-2 bg-muted/50 rounded-lg">
-            Non annullabile (meno di 48h all'evento)
-          </p>
-        )}
-      </div>
-    </motion.div>
+    </motion.button>
   );
 }

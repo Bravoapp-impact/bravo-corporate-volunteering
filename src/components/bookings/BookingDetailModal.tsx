@@ -1,9 +1,10 @@
-import { motion, AnimatePresence } from "framer-motion";
-import { X, MapPin, Calendar, Clock, Building, Sun, CloudRain, Shirt, Info, Navigation } from "lucide-react";
-import { format } from "date-fns";
+import { MapPin, Calendar, Clock, Building, Sun, CloudRain, Shirt, Info, Navigation, X } from "lucide-react";
+import { format, differenceInHours } from "date-fns";
 import { it } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { BaseModal, ModalCloseButton } from "@/components/common/BaseModal";
+import { BaseCardImage } from "@/components/common/BaseCardImage";
 
 interface BookingDetailModalProps {
   booking: {
@@ -17,6 +18,7 @@ interface BookingDetailModalProps {
         description: string | null;
         image_url: string | null;
         association_name: string | null;
+        association_logo_url?: string | null;
         city: string | null;
         address: string | null;
         category: string | null;
@@ -24,6 +26,8 @@ interface BookingDetailModalProps {
     };
   } | null;
   onClose: () => void;
+  onCancel?: (bookingId: string) => void;
+  isCancelling?: boolean;
 }
 
 // Tips based on category
@@ -101,13 +105,16 @@ const getCategoryTips = (category: string | null): { icon: React.ReactNode; titl
   }
 };
 
-export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps) {
+export function BookingDetailModal({ booking, onClose, onCancel, isCancelling }: BookingDetailModalProps) {
   if (!booking) return null;
 
   const experience = booking.experience_dates.experiences;
   const startDate = new Date(booking.experience_dates.start_datetime);
   const endDate = new Date(booking.experience_dates.end_datetime);
   const tips = getCategoryTips(experience.category);
+  
+  const hoursUntilEvent = differenceInHours(startDate, new Date());
+  const canCancel = hoursUntilEvent > 48 && booking.status === "confirmed";
 
   const handleOpenMaps = () => {
     const query = encodeURIComponent(
@@ -117,79 +124,74 @@ export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps
   };
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4"
-        onClick={onClose}
-      >
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          transition={{ duration: 0.3 }}
-          className="bg-card w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl border border-border"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Header Image */}
-          <div className="relative h-48">
-            {experience.image_url ? (
-              <img
-                src={experience.image_url}
-                alt={experience.title}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-muted flex items-center justify-center">
-                <span className="text-6xl">🤝</span>
-              </div>
-            )}
+    <BaseModal open={!!booking} onClose={onClose}>
+      <div className="flex flex-col max-h-[95vh] sm:max-h-[90vh]">
+        {/* Close button overlay */}
+        <div className="absolute top-4 right-4 z-10">
+          <ModalCloseButton onClick={onClose} />
+        </div>
 
-            <button
-              onClick={onClose}
-              className="absolute top-4 right-4 w-10 h-10 rounded-full bg-background/90 backdrop-blur-sm flex items-center justify-center hover:bg-background transition-colors"
-            >
-              <X className="h-5 w-5" />
-            </button>
-
-            {booking.status === "cancelled" && (
-              <Badge variant="destructive" className="absolute top-4 left-4">
-                Prenotazione annullata
-              </Badge>
-            )}
-          </div>
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto">
+          {/* Square Image */}
+          <BaseCardImage
+            imageUrl={experience.image_url}
+            alt={experience.title}
+            aspectRatio="square"
+            fallbackEmoji="🤝"
+            className="rounded-none"
+            badge={
+              booking.status === "cancelled" ? (
+                <Badge variant="destructive">Prenotazione annullata</Badge>
+              ) : null
+            }
+            badgePosition="top-left"
+          />
 
           {/* Content */}
-          <div className="p-6 space-y-6">
-            {/* Association & Category */}
-            <div className="flex items-center gap-2 flex-wrap">
-              {experience.category && (
-                <Badge variant="secondary">{experience.category}</Badge>
-              )}
-              {experience.association_name && (
-                <div className="flex items-center gap-1 text-primary text-sm font-medium">
-                  <Building className="h-4 w-4" />
-                  {experience.association_name}
-                </div>
-              )}
-            </div>
+          <div className="p-5 space-y-4">
+            {/* Category badge */}
+            {experience.category && (
+              <Badge variant="secondary" className="rounded-full">
+                {experience.category}
+              </Badge>
+            )}
 
             {/* Title */}
-            <h2 className="text-2xl font-bold text-foreground">
+            <h2 className="text-xl font-bold text-foreground leading-tight">
               {experience.title}
             </h2>
 
-            {/* Date & Time */}
+            {/* Association */}
+            {experience.association_name && (
+              <div className="flex items-center gap-2">
+                {experience.association_logo_url ? (
+                  <img
+                    src={experience.association_logo_url}
+                    alt=""
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                    <Building className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                )}
+                <div>
+                  <p className="text-sm font-medium text-foreground">
+                    {experience.association_name}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Associazione partner</p>
+                </div>
+              </div>
+            )}
+
+            {/* Date & Time highlight card */}
             <div className="flex flex-col gap-3 p-4 rounded-xl bg-primary/5 border border-primary/10">
               <div className="flex items-center gap-3">
                 <Calendar className="h-5 w-5 text-primary" />
-                <div>
-                  <p className="font-semibold">
-                    {format(startDate, "EEEE d MMMM yyyy", { locale: it })}
-                  </p>
-                </div>
+                <p className="font-semibold">
+                  {format(startDate, "EEEE d MMMM yyyy", { locale: it })}
+                </p>
               </div>
               <div className="flex items-center gap-3">
                 <Clock className="h-5 w-5 text-primary" />
@@ -199,11 +201,11 @@ export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps
               </div>
             </div>
 
-            {/* Location */}
+            {/* Location with Maps link */}
             {(experience.city || experience.address) && (
               <div className="space-y-3">
                 <div className="flex items-start gap-3">
-                  <MapPin className="h-5 w-5 text-primary mt-0.5" />
+                  <MapPin className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
                   <div>
                     {experience.city && (
                       <p className="font-medium">{experience.city}</p>
@@ -231,7 +233,7 @@ export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps
             {experience.description && (
               <div>
                 <h3 className="font-semibold mb-2">Descrizione</h3>
-                <p className="text-muted-foreground text-sm leading-relaxed">
+                <p className="text-[15px] text-muted-foreground font-light leading-relaxed">
                   {experience.description}
                 </p>
               </div>
@@ -252,14 +254,36 @@ export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps
                 ))}
               </ul>
             </div>
+          </div>
+        </div>
 
-            {/* Close button */}
-            <Button onClick={onClose} className="w-full">
+        {/* Fixed footer */}
+        <div className="flex-shrink-0 p-5 border-t border-border bg-background">
+          {canCancel && onCancel ? (
+            <Button
+              variant="outline"
+              className="w-full h-12 text-base font-medium rounded-xl text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+              onClick={() => onCancel(booking.id)}
+              disabled={isCancelling}
+            >
+              {isCancelling ? "Annullamento in corso..." : "Annulla prenotazione"}
+            </Button>
+          ) : !canCancel && booking.status === "confirmed" && hoursUntilEvent <= 48 ? (
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground text-center py-2 bg-muted/50 rounded-lg">
+                Non annullabile (meno di 48h all'evento)
+              </p>
+              <Button onClick={onClose} className="w-full h-12 text-base font-medium rounded-xl">
+                Chiudi
+              </Button>
+            </div>
+          ) : (
+            <Button onClick={onClose} className="w-full h-12 text-base font-medium rounded-xl">
               Chiudi
             </Button>
-          </div>
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
+          )}
+        </div>
+      </div>
+    </BaseModal>
   );
 }
