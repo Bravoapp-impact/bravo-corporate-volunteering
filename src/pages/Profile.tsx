@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { User, LogOut, Building2, Mail, Save, Loader2 } from "lucide-react";
@@ -19,13 +19,37 @@ const profileSchema = z.object({
 });
 
 export default function Profile() {
-  const { profile, signOut, refreshProfile } = useAuth();
+  const { profile, loading, signOut, refreshProfile } = useAuth();
   const navigate = useNavigate();
   
   const [firstName, setFirstName] = useState(profile?.first_name || "");
   const [lastName, setLastName] = useState(profile?.last_name || "");
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<{ firstName?: string; lastName?: string }>({});
+
+  // Redirect admin users to their specific profile pages
+  useEffect(() => {
+    if (!loading && profile) {
+      const roleRoutes: Record<string, string> = {
+        super_admin: "/super-admin/profile",
+        hr_admin: "/hr/profile",
+        association_admin: "/association/my-profile",
+      };
+      
+      if (profile.role && roleRoutes[profile.role]) {
+        navigate(roleRoutes[profile.role], { replace: true });
+      }
+    }
+  }, [profile, loading, navigate]);
+
+  // Show loading while checking role or redirecting
+  if (loading || (profile?.role && profile.role !== "employee")) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   const hasChanges = 
     firstName !== (profile?.first_name || "") || 
