@@ -7,6 +7,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ProtectedHRRoute } from "@/components/ProtectedHRRoute";
 import { ProtectedSuperAdminRoute } from "@/components/ProtectedSuperAdminRoute";
+import { ProtectedAssociationRoute } from "@/components/ProtectedAssociationRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -29,6 +30,10 @@ import CitiesPage from "./pages/super-admin/CitiesPage";
 import CategoriesPage from "./pages/super-admin/CategoriesPage";
 import EmailTemplatesPage from "./pages/super-admin/EmailTemplatesPage";
 import AccessCodesPage from "./pages/super-admin/AccessCodesPage";
+import AssociationDashboard from "./pages/association/AssociationDashboard";
+import AssociationExperiencesPage from "./pages/association/AssociationExperiencesPage";
+import AssociationHistoryPage from "./pages/association/AssociationHistoryPage";
+import AssociationProfilePage from "./pages/association/AssociationProfilePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -181,6 +186,39 @@ const App = () => (
                 <ProtectedSuperAdminRoute>
                   <AccessCodesPage />
                 </ProtectedSuperAdminRoute>
+              }
+            />
+            {/* Association Admin Routes */}
+            <Route
+              path="/association"
+              element={
+                <ProtectedAssociationRoute>
+                  <AssociationDashboard />
+                </ProtectedAssociationRoute>
+              }
+            />
+            <Route
+              path="/association/experiences"
+              element={
+                <ProtectedAssociationRoute>
+                  <AssociationExperiencesPage />
+                </ProtectedAssociationRoute>
+              }
+            />
+            <Route
+              path="/association/history"
+              element={
+                <ProtectedAssociationRoute>
+                  <AssociationHistoryPage />
+                </ProtectedAssociationRoute>
+              }
+            />
+            <Route
+              path="/association/profile"
+              element={
+                <ProtectedAssociationRoute>
+                  <AssociationProfilePage />
+                </ProtectedAssociationRoute>
               }
             />
             <Route path="*" element={<NotFound />} />

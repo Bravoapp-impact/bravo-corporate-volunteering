@@ -30,6 +30,9 @@ export function ProtectedSuperAdminRoute({ children }: ProtectedSuperAdminRouteP
     if (profile?.role === "hr_admin") {
       return <Navigate to="/hr" replace />;
     }
+    if (profile?.role === "association_admin") {
+      return <Navigate to="/association" replace />;
+    }
     return <Navigate to="/app/experiences" replace />;
   }
 
