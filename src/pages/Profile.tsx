@@ -1,32 +1,18 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { LogOut, Building2, Mail, Save, Loader2 } from "lucide-react";
+import { LogOut, Building2, Mail, Loader2 } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { ProfileAvatarUpload } from "@/components/profile/ProfileAvatarUpload";
+import { ProfileEditForm } from "@/components/profile/ProfileEditForm";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { z } from "zod";
-
-const profileSchema = z.object({
-  firstName: z.string().trim().min(1, "Il nome è obbligatorio").max(50, "Max 50 caratteri"),
-  lastName: z.string().trim().min(1, "Il cognome è obbligatorio").max(50, "Max 50 caratteri"),
-});
 
 export default function Profile() {
   const { profile, loading, signOut, refreshProfile } = useAuth();
   const navigate = useNavigate();
-  
-  const [firstName, setFirstName] = useState(profile?.first_name || "");
-  const [lastName, setLastName] = useState(profile?.last_name || "");
-  const [saving, setSaving] = useState(false);
-  const [errors, setErrors] = useState<{ firstName?: string; lastName?: string }>({});
 
   // Redirect admin users to their specific profile pages
   useEffect(() => {
@@ -36,7 +22,7 @@ export default function Profile() {
         hr_admin: "/hr/profile",
         association_admin: "/association/my-profile",
       };
-      
+
       if (profile.role && roleRoutes[profile.role]) {
         navigate(roleRoutes[profile.role], { replace: true });
       }
@@ -51,46 +37,6 @@ export default function Profile() {
       </div>
     );
   }
-
-  const hasChanges = 
-    firstName !== (profile?.first_name || "") || 
-    lastName !== (profile?.last_name || "");
-
-  const handleSave = async () => {
-    setErrors({});
-    
-    const result = profileSchema.safeParse({ firstName, lastName });
-    if (!result.success) {
-      const fieldErrors: { firstName?: string; lastName?: string } = {};
-      result.error.errors.forEach((err) => {
-        if (err.path[0] === "firstName") fieldErrors.firstName = err.message;
-        if (err.path[0] === "lastName") fieldErrors.lastName = err.message;
-      });
-      setErrors(fieldErrors);
-      return;
-    }
-
-    setSaving(true);
-    try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          first_name: result.data.firstName,
-          last_name: result.data.lastName,
-        })
-        .eq("id", profile?.id);
-
-      if (error) throw error;
-
-      await refreshProfile();
-      toast.success("Profilo aggiornato con successo!");
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      toast.error("Errore durante l'aggiornamento del profilo");
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -157,58 +103,14 @@ export default function Profile() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Modifica dati</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="firstName">Nome</Label>
-                <Input
-                  id="firstName"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  placeholder="Il tuo nome"
-                  className={errors.firstName ? "border-destructive" : ""}
-                />
-                {errors.firstName && (
-                  <p className="text-xs text-destructive">{errors.firstName}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="lastName">Cognome</Label>
-                <Input
-                  id="lastName"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  placeholder="Il tuo cognome"
-                  className={errors.lastName ? "border-destructive" : ""}
-                />
-                {errors.lastName && (
-                  <p className="text-xs text-destructive">{errors.lastName}</p>
-                )}
-              </div>
-
-              <Button
-                onClick={handleSave}
-                disabled={!hasChanges || saving}
-                className="w-full"
-              >
-                {saving ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Salvataggio...
-                  </>
-                ) : (
-                  <>
-                    <Save className="mr-2 h-4 w-4" />
-                    Salva modifiche
-                  </>
-                )}
-              </Button>
-            </CardContent>
-          </Card>
+          {profile?.id && (
+            <ProfileEditForm
+              profileId={profile.id}
+              initialFirstName={profile.first_name}
+              initialLastName={profile.last_name}
+              onSave={refreshProfile}
+            />
+          )}
         </motion.div>
 
         {/* Info Section */}
