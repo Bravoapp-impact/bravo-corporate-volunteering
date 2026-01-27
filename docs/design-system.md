@@ -461,46 +461,198 @@ Tutte le card admin usano:
 <Card className="border-border/50 bg-card/80 backdrop-blur-sm hover:shadow-md transition-shadow">
 ```
 
-### Metric Card Standard
+---
+
+## 🧱 Componenti Riutilizzabili
+
+Una serie di componenti condivisi è disponibile in `src/components/common/` e `src/components/profile/` per garantire consistenza e ridurre la duplicazione di codice.
+
+### PageHeader
+
+Header standard per tutte le pagine con titolo, descrizione e azioni opzionali.
+
+**Path:** `src/components/common/PageHeader.tsx`
 
 ```tsx
-<Card className="border-border/50 bg-card/80 backdrop-blur-sm hover:shadow-md transition-shadow">
-  <CardContent className="p-4 sm:p-6">
-    <div className="flex items-start justify-between">
-      <div>
-        <p className="text-sm font-medium text-muted-foreground">{label}</p>
-        <p className="text-2xl sm:text-3xl font-bold mt-2">{value}</p>
-      </div>
-      <div className={`p-2.5 sm:p-3 rounded-xl ${bgColor}`}>
-        <Icon className={`h-5 w-5 sm:h-6 sm:w-6 ${textColor}`} />
-      </div>
-    </div>
-  </CardContent>
-</Card>
+import { PageHeader } from "@/components/common/PageHeader";
+
+<PageHeader
+  title="Aziende"
+  description="Gestisci le aziende clienti della piattaforma"
+  actions={
+    <Button onClick={handleCreate}>
+      <Plus className="h-4 w-4 mr-2" />
+      Nuova Azienda
+    </Button>
+  }
+/>
 ```
 
-### Empty State Standard
+**Props:**
+| Prop | Tipo | Obbligatorio | Descrizione |
+|------|------|--------------|-------------|
+| `title` | `string` | ✅ | Titolo principale (h1) |
+| `description` | `string` | ❌ | Sottotitolo descrittivo |
+| `actions` | `ReactNode` | ❌ | Bottoni o azioni (allineati a destra su desktop) |
+| `className` | `string` | ❌ | Classi CSS aggiuntive |
+
+---
+
+### MetricCard
+
+Card per visualizzare metriche/KPI con icona tematica e animazione.
+
+**Path:** `src/components/common/MetricCard.tsx`
 
 ```tsx
-<div className="flex flex-col items-center justify-center py-12 text-center">
-  <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-    <Icon className="h-8 w-8 text-muted-foreground/50" />
-  </div>
-  <h3 className="text-lg font-medium text-foreground mb-1">Nessun elemento</h3>
-  <p className="text-sm text-muted-foreground max-w-sm">Descrizione vuota.</p>
-</div>
+import { MetricCard } from "@/components/common/MetricCard";
+
+<MetricCard
+  label="Ore di Volontariato"
+  value={245}
+  icon={Clock}
+  iconColor="text-bravo-orange"
+  iconBgColor="bg-bravo-orange/10"
+  subLabel="ultimo mese"
+  animationDelay={0.1}
+/>
 ```
 
-### Loading State Standard
+**Props:**
+| Prop | Tipo | Obbligatorio | Descrizione |
+|------|------|--------------|-------------|
+| `label` | `string` | ✅ | Etichetta della metrica |
+| `value` | `string \| number` | ✅ | Valore numerico o testuale |
+| `icon` | `LucideIcon` | ✅ | Icona Lucide da mostrare |
+| `iconColor` | `string` | ✅ | Classe colore testo icona (es. `text-bravo-orange`) |
+| `iconBgColor` | `string` | ✅ | Classe colore sfondo icona (es. `bg-bravo-orange/10`) |
+| `subLabel` | `string` | ❌ | Etichetta secondaria sotto il valore |
+| `animationDelay` | `number` | ❌ | Delay animazione Framer Motion (default: 0) |
+| `className` | `string` | ❌ | Classi CSS aggiuntive |
+
+---
+
+### LoadingState
+
+Stato di caricamento standard con spinner e messaggio.
+
+**Path:** `src/components/common/LoadingState.tsx`
 
 ```tsx
-<div className="flex items-center justify-center min-h-[60vh]">
-  <div className="flex flex-col items-center gap-4">
-    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-    <p className="text-muted-foreground">Caricamento...</p>
-  </div>
-</div>
+import { LoadingState } from "@/components/common/LoadingState";
+
+// Uso base
+<LoadingState />
+
+// Con messaggio custom
+<LoadingState message="Caricamento dipendenti..." />
+
+// Altezza ridotta (non full viewport)
+<LoadingState message="Attendere..." fullHeight={false} />
 ```
+
+**Props:**
+| Prop | Tipo | Obbligatorio | Default | Descrizione |
+|------|------|--------------|---------|-------------|
+| `message` | `string` | ❌ | `"Caricamento..."` | Messaggio sotto lo spinner |
+| `fullHeight` | `boolean` | ❌ | `true` | Se `true`, occupa `min-h-[60vh]` |
+
+---
+
+### EmptyState
+
+Stato vuoto standard per liste, tabelle e sezioni senza dati.
+
+**Path:** `src/components/common/EmptyState.tsx`
+
+```tsx
+import { EmptyState } from "@/components/common/EmptyState";
+
+// Con icona Lucide
+<EmptyState
+  icon={Users}
+  title="Nessun dipendente trovato"
+  description="Non ci sono dipendenti che corrispondono ai filtri."
+/>
+
+// Con emoji
+<EmptyState
+  icon="🎉"
+  title="Nessuna notifica"
+  description="Sei tutto in pari!"
+/>
+
+// Con azione
+<EmptyState
+  icon={Calendar}
+  title="Nessuna esperienza"
+  description="Non hai ancora prenotato esperienze."
+  action={
+    <Button onClick={handleExplore}>
+      Esplora esperienze
+    </Button>
+  }
+/>
+```
+
+**Props:**
+| Prop | Tipo | Obbligatorio | Descrizione |
+|------|------|--------------|-------------|
+| `icon` | `LucideIcon \| string` | ❌ | Icona Lucide o emoji |
+| `title` | `string` | ✅ | Titolo dello stato vuoto |
+| `description` | `string` | ❌ | Descrizione aggiuntiva |
+| `action` | `ReactNode` | ❌ | Bottone o link per azione |
+| `className` | `string` | ❌ | Classi CSS aggiuntive |
+
+---
+
+### ProfileEditForm
+
+Form riutilizzabile per la modifica del profilo utente (nome, cognome).
+
+**Path:** `src/components/profile/ProfileEditForm.tsx`
+
+```tsx
+import { ProfileEditForm } from "@/components/profile/ProfileEditForm";
+
+<ProfileEditForm
+  profile={profile}
+  onSave={refreshProfile}
+  cardClassName="border-0 shadow-none" // opzionale per stili custom
+/>
+```
+
+**Props:**
+| Prop | Tipo | Obbligatorio | Descrizione |
+|------|------|--------------|-------------|
+| `profile` | `Profile` | ✅ | Oggetto profilo utente |
+| `onSave` | `() => void` | ✅ | Callback chiamata dopo salvataggio |
+| `cardClassName` | `string` | ❌ | Classi CSS per la Card container |
+
+**Funzionalità incluse:**
+- Validazione Zod (nome e cognome obbligatori, min 2 caratteri)
+- Gestione stato di salvataggio
+- Toast di feedback (successo/errore)
+- Integrazione diretta con Supabase
+
+---
+
+## 🔄 Quando Usare i Componenti Riutilizzabili
+
+| Situazione | Componente da usare |
+|------------|---------------------|
+| Header di una pagina admin | `PageHeader` |
+| Visualizzare KPI/metriche | `MetricCard` |
+| Stato di caricamento dati | `LoadingState` |
+| Lista/tabella vuota | `EmptyState` |
+| Form modifica profilo | `ProfileEditForm` |
+
+**Vantaggi:**
+- ✅ Consistenza visiva garantita
+- ✅ Animazioni e stili pre-configurati
+- ✅ Responsive out-of-the-box
+- ✅ Meno codice duplicato
+- ✅ Manutenzione centralizzata
 
 ---
 
@@ -508,4 +660,6 @@ Tutte le card admin usano:
 
 - **Tailwind Config**: `tailwind.config.ts`
 - **CSS Variables**: `src/index.css`
-- **UI Components**: `src/components/ui/`
+- **UI Components (shadcn)**: `src/components/ui/`
+- **Componenti Riutilizzabili**: `src/components/common/`, `src/components/profile/`
+- **Layout Admin**: `src/components/layout/AdminLayout.tsx`
