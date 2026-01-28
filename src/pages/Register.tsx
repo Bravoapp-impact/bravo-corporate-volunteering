@@ -17,7 +17,7 @@ export default function Register() {
     password: "",
     accessCode: "",
   });
-  const [companyName, setCompanyName] = useState<string | null>(null);
+  const [entityName, setEntityName] = useState<string | null>(null);
   const [isValidatingCode, setIsValidatingCode] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -27,9 +27,9 @@ export default function Register() {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
-    // Reset company validation when code changes
+    // Reset entity validation when code changes
     if (name === "accessCode") {
-      setCompanyName(null);
+      setEntityName(null);
     }
   };
 
@@ -40,12 +40,12 @@ export default function Register() {
     try {
       const codeInfo = await validateAccessCode(formData.accessCode);
       if (codeInfo) {
-        setCompanyName(codeInfo.entity_name);
+        setEntityName(codeInfo.entity_name);
       } else {
-        setCompanyName(null);
+        setEntityName(null);
       }
     } catch {
-      setCompanyName(null);
+      setEntityName(null);
     } finally {
       setIsValidatingCode(false);
     }
@@ -91,7 +91,7 @@ export default function Register() {
   return (
     <AuthLayout
       title="Crea il tuo account"
-      subtitle="Inizia il tuo percorso di volontariato aziendale"
+      subtitle="Inserisci i tuoi dati per creare un account"
     >
       <form onSubmit={handleSubmit} className="space-y-5">
         <motion.div
@@ -120,14 +120,14 @@ export default function Register() {
                 <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
               )}
             </div>
-            {companyName && (
+            {entityName && (
               <motion.p
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 className="text-sm text-secondary-foreground flex items-center gap-2 bg-secondary px-3 py-2 rounded-lg"
               >
                 <span className="text-lg">✓</span>
-                {companyName}
+                {entityName}
               </motion.p>
             )}
           </div>
@@ -166,14 +166,14 @@ export default function Register() {
 
           {/* Email */}
           <div className="space-y-2">
-            <Label htmlFor="email">Email aziendale</Label>
+            <Label htmlFor="email">Email</Label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 id="email"
                 name="email"
                 type="email"
-                placeholder="nome@azienda.it"
+                placeholder="example@domain.com"
                 value={formData.email}
                 onChange={handleChange}
                 className="pl-10"
@@ -210,7 +210,7 @@ export default function Register() {
           <Button
             type="submit"
             className="w-full h-12 text-base font-medium"
-            disabled={isLoading || !companyName}
+            disabled={isLoading || !entityName}
           >
             {isLoading ? (
               <Loader2 className="h-5 w-5 animate-spin" />

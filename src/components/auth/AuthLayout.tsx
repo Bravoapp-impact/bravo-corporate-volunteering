@@ -42,7 +42,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
               className="h-12 lg:h-16 w-auto mb-6" 
             />
             <p className="text-xl lg:text-2xl font-light opacity-90 max-w-md leading-relaxed">
-              Fai del bene, insieme alla tua azienda. Un'esperienza di volontariato alla volta.
+              Bravo! è dove si crea impatto positivo. Trasformiamo la buona intenzione in azione concreta.
             </p>
           </motion.div>
           
@@ -63,7 +63,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
               ))}
             </div>
             <p className="text-sm opacity-80">
-              +2,500 dipendenti volontari
+              +1,800 persone Brave
             </p>
           </motion.div>
         </div>

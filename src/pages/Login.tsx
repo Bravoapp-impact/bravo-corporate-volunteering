@@ -63,7 +63,7 @@ export default function Login() {
   return (
     <AuthLayout
       title="Bentornato"
-      subtitle="Accedi per scoprire le esperienze di volontariato disponibili"
+      subtitle="Inserisci i tuoi dati per accedere a Bravo!"
     >
       <form onSubmit={handleSubmit} className="space-y-6">
         <motion.div
@@ -79,7 +79,7 @@ export default function Login() {
               <Input
                 id="email"
                 type="email"
-                placeholder="nome@azienda.it"
+                placeholder="example@domain.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="pl-10"
