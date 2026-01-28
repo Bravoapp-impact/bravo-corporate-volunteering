@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 interface BookingConfirmationRequest {
@@ -29,20 +29,50 @@ const formatTime = (dateStr: string): string => {
 serve(async (req: Request): Promise<Response> => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response("ok", { headers: corsHeaders });
   }
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
 
+    // Authenticate the request
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(
+        JSON.stringify({ error: "Authentication required" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Validate JWT and get user
+    const authSupabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    
+    const { data: { user }, error: userError } = await authSupabase.auth.getUser();
+    
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: "Invalid authentication" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const userId = user.id;
+
+    // Use service role client for database operations
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const { booking_id }: BookingConfirmationRequest = await req.json();
 
     if (!booking_id) {
-      throw new Error("booking_id is required");
+      return new Response(
+        JSON.stringify({ error: "Missing required parameter" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     console.log(`Processing booking confirmation for: ${booking_id}`);
@@ -63,7 +93,23 @@ serve(async (req: Request): Promise<Response> => {
       .single();
 
     if (bookingError || !booking) {
-      throw new Error(`Booking not found: ${bookingError?.message}`);
+      console.error("Booking lookup error:", bookingError);
+      return new Response(
+        JSON.stringify({ error: "Booking not found" }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Verify the user owns this booking or is an admin
+    if (booking.user_id !== userId) {
+      // Check if user is super_admin or hr_admin
+      const { data: userRole } = await supabase.rpc("get_user_role", { user_uuid: userId });
+      if (userRole !== "super_admin" && userRole !== "hr_admin") {
+        return new Response(
+          JSON.stringify({ error: "Not authorized" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     // Get user profile
@@ -74,7 +120,11 @@ serve(async (req: Request): Promise<Response> => {
       .single();
 
     if (profileError || !profile) {
-      throw new Error(`Profile not found: ${profileError?.message}`);
+      console.error("Profile lookup error:", profileError);
+      return new Response(
+        JSON.stringify({ error: "User profile not found" }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // Get experience date details
@@ -92,7 +142,11 @@ serve(async (req: Request): Promise<Response> => {
       .single();
 
     if (dateError || !experienceDate) {
-      throw new Error(`Experience date not found: ${dateError?.message}`);
+      console.error("Experience date lookup error:", dateError);
+      return new Response(
+        JSON.stringify({ error: "Experience date not found" }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // Get experience details
@@ -103,7 +157,11 @@ serve(async (req: Request): Promise<Response> => {
       .single();
 
     if (expError || !experience) {
-      throw new Error(`Experience not found: ${expError?.message}`);
+      console.error("Experience lookup error:", expError);
+      return new Response(
+        JSON.stringify({ error: "Experience not found" }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // Check email settings for the company
@@ -242,8 +300,11 @@ serve(async (req: Request): Promise<Response> => {
     const emailResult = await emailResponse.json();
 
     if (!emailResponse.ok) {
-      console.error("Resend error:", emailResult);
-      throw new Error(`Failed to send email: ${emailResult.message || "Unknown error"}`);
+      console.error("Email service error:", emailResult);
+      return new Response(
+        JSON.stringify({ error: "Failed to send email" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     console.log("Email sent successfully:", emailResult);
@@ -259,11 +320,11 @@ serve(async (req: Request): Promise<Response> => {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error in send-booking-confirmation:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: "An unexpected error occurred" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   }
 });
