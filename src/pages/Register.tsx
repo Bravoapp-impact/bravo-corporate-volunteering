@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AuthLayout } from "@/components/auth/AuthLayout";
+import { AccessRequestModal } from "@/components/auth/AccessRequestModal";
 import { signUp, validateAccessCode } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 
@@ -20,6 +21,7 @@ export default function Register() {
   const [entityName, setEntityName] = useState<string | null>(null);
   const [isValidatingCode, setIsValidatingCode] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [accessRequestModalOpen, setAccessRequestModalOpen] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -104,12 +106,13 @@ export default function Register() {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="accessCode">Codice di Accesso</Label>
-              <a
-                href="mailto:team@bravoapp.it"
+              <button
+                type="button"
+                onClick={() => setAccessRequestModalOpen(true)}
                 className="text-xs text-muted-foreground underline hover:text-foreground transition-colors"
               >
-                Non hai il codice di accesso? Richiedilo via email
-              </a>
+                Non hai il codice di accesso?
+              </button>
             </div>
             <div className="relative">
               <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -246,6 +249,11 @@ export default function Register() {
           Accedi
         </Link>
       </motion.p>
+
+      <AccessRequestModal
+        open={accessRequestModalOpen}
+        onClose={() => setAccessRequestModalOpen(false)}
+      />
     </AuthLayout>
   );
 }

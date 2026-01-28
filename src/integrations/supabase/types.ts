@@ -56,6 +56,60 @@ export type Database = {
         }
         Relationships: []
       }
+      access_requests: {
+        Row: {
+          association_name: string | null
+          city: string | null
+          company_name: string | null
+          created_at: string
+          email: string
+          first_name: string | null
+          id: string
+          last_name: string | null
+          message: string | null
+          notes: string | null
+          phone: string | null
+          request_type: Database["public"]["Enums"]["access_request_type"]
+          role_in_company: string | null
+          status: Database["public"]["Enums"]["access_request_status"]
+          updated_at: string
+        }
+        Insert: {
+          association_name?: string | null
+          city?: string | null
+          company_name?: string | null
+          created_at?: string
+          email: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          message?: string | null
+          notes?: string | null
+          phone?: string | null
+          request_type: Database["public"]["Enums"]["access_request_type"]
+          role_in_company?: string | null
+          status?: Database["public"]["Enums"]["access_request_status"]
+          updated_at?: string
+        }
+        Update: {
+          association_name?: string | null
+          city?: string | null
+          company_name?: string | null
+          created_at?: string
+          email?: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          message?: string | null
+          notes?: string | null
+          phone?: string | null
+          request_type?: Database["public"]["Enums"]["access_request_type"]
+          role_in_company?: string | null
+          status?: Database["public"]["Enums"]["access_request_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       association_cities: {
         Row: {
           association_id: string
@@ -682,6 +736,12 @@ export type Database = {
       }
     }
     Enums: {
+      access_request_status: "pending" | "contacted" | "closed"
+      access_request_type:
+        | "employee_needs_code"
+        | "company_lead"
+        | "association_lead"
+        | "individual_waitlist"
       app_role: "employee" | "hr_admin" | "association_admin" | "super_admin"
     }
     CompositeTypes: {
@@ -810,6 +870,13 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      access_request_status: ["pending", "contacted", "closed"],
+      access_request_type: [
+        "employee_needs_code",
+        "company_lead",
+        "association_lead",
+        "individual_waitlist",
+      ],
       app_role: ["employee", "hr_admin", "association_admin", "super_admin"],
     },
   },

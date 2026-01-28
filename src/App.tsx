@@ -36,6 +36,7 @@ import AssociationHistoryPage from "./pages/association/AssociationHistoryPage";
 import AssociationProfilePage from "./pages/association/AssociationProfilePage";
 import AssociationAdminProfile from "./pages/association/AssociationAdminProfile";
 import HRProfile from "./pages/hr/HRProfile";
+import AccessRequestsPage from "./pages/super-admin/AccessRequestsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -195,6 +196,14 @@ const App = () => (
               element={
                 <ProtectedSuperAdminRoute>
                   <AccessCodesPage />
+                </ProtectedSuperAdminRoute>
+              }
+            />
+            <Route
+              path="/super-admin/access-requests"
+              element={
+                <ProtectedSuperAdminRoute>
+                  <AccessRequestsPage />
                 </ProtectedSuperAdminRoute>
               }
             />

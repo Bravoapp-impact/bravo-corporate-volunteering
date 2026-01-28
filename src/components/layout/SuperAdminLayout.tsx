@@ -10,6 +10,7 @@ import {
   Heart,
   Mail,
   KeyRound,
+  Inbox,
 } from "lucide-react";
 import { AdminLayout, SidebarItem } from "./AdminLayout";
 
@@ -37,6 +38,11 @@ const sidebarItems: SidebarItem[] = [
     label: "Codici Accesso",
     icon: KeyRound,
     href: "/super-admin/access-codes",
+  },
+  {
+    label: "Richieste Accesso",
+    icon: Inbox,
+    href: "/super-admin/access-requests",
   },
   {
     label: "Esperienze",
