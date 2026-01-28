@@ -42,7 +42,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
               className="h-12 lg:h-16 w-auto mb-6" 
             />
             <p className="text-xl lg:text-2xl font-light opacity-90 max-w-md leading-relaxed">
-              Bravo! è dove si crea impatto positivo. Trasformiamo la buona intenzione in azione concreta.
+              Bravo! è dove si crea impatto positivo
             </p>
           </motion.div>
           

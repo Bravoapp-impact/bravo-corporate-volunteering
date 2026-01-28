@@ -102,7 +102,15 @@ export default function Register() {
         >
           {/* Access Code - First! */}
           <div className="space-y-2">
-            <Label htmlFor="accessCode">Codice di Accesso</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="accessCode">Codice di Accesso</Label>
+              <a
+                href="mailto:team@bravoapp.it"
+                className="text-xs text-muted-foreground underline hover:text-foreground transition-colors"
+              >
+                Non hai il codice di accesso? Richiedilo via email
+              </a>
+            </div>
             <div className="relative">
               <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -173,7 +181,7 @@ export default function Register() {
                 id="email"
                 name="email"
                 type="email"
-                placeholder="example@domain.com"
+                placeholder="esempio@dominio.it"
                 value={formData.email}
                 onChange={handleChange}
                 className="pl-10"
