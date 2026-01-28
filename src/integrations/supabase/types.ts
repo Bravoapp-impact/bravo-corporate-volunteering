@@ -138,6 +138,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "association_cities_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "association_cities_city_id_fkey"
             columns: ["city_id"]
             isOneToOne: false
@@ -564,6 +571,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "experiences_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "experiences_category_id_fkey"
             columns: ["category_id"]
             isOneToOne: false
@@ -622,6 +636,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "profiles_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "profiles_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
@@ -677,7 +698,42 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      associations_public: {
+        Row: {
+          address: string | null
+          created_at: string | null
+          description: string | null
+          id: string | null
+          logo_url: string | null
+          name: string | null
+          status: string | null
+          updated_at: string | null
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          logo_url?: string | null
+          name?: string | null
+          status?: string | null
+          updated_at?: string | null
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          logo_url?: string | null
+          name?: string | null
+          status?: string | null
+          updated_at?: string | null
+          website?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       admin_set_user_role: {
