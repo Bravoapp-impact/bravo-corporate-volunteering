@@ -783,6 +783,34 @@ import { BaseModal, ModalCloseButton } from "@/components/common/BaseModal";
 
 ---
 
+## 📜 Scroll Orizzontale (Airbnb-style Edge-to-Edge)
+
+Per sezioni con card scrollabili orizzontalmente che escono da entrambi i lati dello schermo:
+
+```tsx
+// Container con margine negativo su entrambi i lati per edge-to-edge completo
+<div className="overflow-x-auto scrollbar-hide -mx-8">
+  <div className="flex gap-2.5 px-8">
+    {items.map(...)}
+  </div>
+</div>
+```
+
+**Come funziona:**
+- `-mx-8` compensa il padding del container (32px) su entrambi i lati
+- `px-8` aggiunge padding interno per allineare la prima card e bilanciare l'ultima
+- Le card scrollano fuori schermo sia a sinistra che a destra (come Airbnb)
+- `gap-2.5` (10px) mantiene le card separate ma compatte
+- `scrollbar-hide` nasconde la scrollbar mantenendo la funzionalità
+
+**Calcolo per iPhone 375px:**
+- Card da 145px + gap 10px = 2 card complete + ~33px peek della terza
+- Il peek invita l'utente a scrollare
+
+**File di riferimento:** `src/components/experiences/ExperienceSection.tsx`
+
+---
+
 ### ProfileEditForm
 
 Form riutilizzabile per la modifica del profilo utente (nome, cognome).

@@ -31,7 +31,7 @@ export function BottomNavigation() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border/50 pb-safe md:hidden">
-      <div className="flex items-center justify-around h-16">
+      <div className="flex items-center justify-around h-14">
         {navItems.map((item) => {
           const active = isActive(item.path);
           const Icon = item.icon;
@@ -40,10 +40,10 @@ export function BottomNavigation() {
             <Link
               key={item.path}
               to={item.path}
-              className="flex flex-col items-center justify-center flex-1 h-full relative py-2"
+              className="flex flex-col items-center justify-center flex-1 h-full relative py-1.5"
             >
               <motion.div
-                className="flex flex-col items-center gap-1"
+                className="flex flex-col items-center gap-0.5"
                 whileTap={{ scale: 0.95 }}
               >
                 <div className="relative">
