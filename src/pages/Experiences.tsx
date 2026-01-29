@@ -130,10 +130,10 @@ export default function Experiences() {
         animate={{ opacity: 1, y: 0 }}
         className="mb-6"
       >
-        <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1">
+        <h1 className="text-xl md:text-2xl font-bold text-foreground mb-0.5">
           Esperienze di volontariato
         </h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-[13px] text-muted-foreground">
           Scopri le opportunità disponibili per la tua azienda
         </p>
       </motion.div>
@@ -172,9 +172,9 @@ export default function Experiences() {
         </div>
       ) : filteredExperiences.length === 0 ? (
         <div className="text-center py-16">
-          <p className="text-5xl mb-4">🔍</p>
-          <h3 className="text-lg font-semibold mb-2">Nessuna esperienza trovata</h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-4xl mb-4">🔍</p>
+          <h3 className="text-base font-semibold mb-1">Nessuna esperienza trovata</h3>
+          <p className="text-[13px] text-muted-foreground">
             Prova a modificare i criteri di ricerca
           </p>
         </div>

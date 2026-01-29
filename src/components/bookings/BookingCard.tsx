@@ -71,10 +71,10 @@ export function BookingCard({
           )}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-medium text-muted-foreground truncate">
+          <p className="text-[13px] font-medium text-muted-foreground truncate">
             {experience.title}
           </p>
-          <p className="text-sm text-muted-foreground/70">
+          <p className="text-[11px] text-muted-foreground/70">
             {format(startDate, "d MMMM yyyy", { locale: it })}
           </p>
         </div>
@@ -116,36 +116,36 @@ export function BookingCard({
       />
 
       {/* Content */}
-      <div className="pt-3 space-y-1.5">
+      <div className="pt-2 space-y-1">
         {/* Title */}
-        <h3 className="text-[15px] font-medium text-foreground line-clamp-2 leading-snug group-hover:text-primary transition-colors">
+        <h3 className="text-[13px] font-medium text-foreground line-clamp-2 leading-snug group-hover:text-primary transition-colors">
           {experience.title}
         </h3>
 
         {/* Association with logo */}
         {experience.association_name && (
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             {experience.association_logo_url ? (
               <img
                 src={experience.association_logo_url}
                 alt=""
-                className="w-4 h-4 rounded-full object-cover flex-shrink-0"
+                className="w-3.5 h-3.5 rounded-full object-cover flex-shrink-0"
               />
             ) : (
-              <div className="w-4 h-4 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                <span className="text-[8px]">🏢</span>
+              <div className="w-3.5 h-3.5 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                <span className="text-[7px]">🏢</span>
               </div>
             )}
-            <p className="text-[13px] text-muted-foreground font-light truncate">
+            <p className="text-[11px] text-muted-foreground font-light truncate">
               {experience.association_name}
             </p>
           </div>
         )}
 
         {/* Time + Duration + Location */}
-        <div className="flex items-center gap-2 text-[13px] text-muted-foreground font-light">
+        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-light">
           <span className="flex items-center gap-0.5">
-            <Clock className="h-3 w-3" />
+            <Clock className="h-2.5 w-2.5" />
             {format(startDate, "HH:mm")}
           </span>
           {durationHours > 0 && (
@@ -158,7 +158,7 @@ export function BookingCard({
             <>
               <span className="text-border">·</span>
               <span className="flex items-center gap-0.5 truncate">
-                <MapPin className="h-3 w-3 flex-shrink-0" />
+                <MapPin className="h-2.5 w-2.5 flex-shrink-0" />
                 <span className="truncate">{experience.city}</span>
               </span>
             </>

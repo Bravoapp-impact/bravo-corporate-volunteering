@@ -121,12 +121,12 @@ export default function MyBookings() {
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-8"
+        className="mb-6"
       >
-        <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
+        <h1 className="text-xl md:text-2xl font-bold text-foreground mb-0.5">
           Le mie prenotazioni
         </h1>
-        <p className="text-muted-foreground">
+        <p className="text-[13px] text-muted-foreground">
           Gestisci le tue esperienze di volontariato
         </p>
       </motion.div>
@@ -139,12 +139,12 @@ export default function MyBookings() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center py-16 bg-muted/30 rounded-2xl border border-border/50"
+          className="text-center py-12 bg-muted/30 rounded-2xl border border-border/50"
         >
-          <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-xl font-semibold mb-2">Nessuna prenotazione</h3>
-          <p className="text-muted-foreground max-w-md mx-auto">
-            Non hai ancora prenotato nessuna esperienza. Esplora il catalogo e trova l'attività perfetta per te!
+          <Calendar className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+          <h3 className="text-base font-semibold mb-1">Nessuna prenotazione</h3>
+          <p className="text-[13px] text-muted-foreground max-w-md mx-auto">
+            Non hai ancora prenotato nessuna esperienza. Esplora il catalogo!
           </p>
         </motion.div>
       ) : (
@@ -155,11 +155,11 @@ export default function MyBookings() {
               <motion.h2
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="text-xl font-semibold mb-6 flex items-center gap-2"
+                className="text-base font-semibold mb-4 flex items-center gap-2"
               >
-                <span className="w-2 h-2 rounded-full bg-primary" />
+                <span className="w-1.5 h-1.5 rounded-full bg-primary" />
                 Prossime esperienze
-                <span className="text-sm font-normal text-muted-foreground ml-2">
+                <span className="text-[13px] font-normal text-muted-foreground ml-1">
                   ({futureBookings.length})
                 </span>
               </motion.h2>
@@ -189,7 +189,7 @@ export default function MyBookings() {
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.2 }}
-                  className="text-lg font-medium text-muted-foreground"
+                  className="text-[15px] font-medium text-muted-foreground"
                 >
                   Storico
                 </motion.h2>

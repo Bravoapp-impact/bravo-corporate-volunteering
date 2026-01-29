@@ -61,17 +61,9 @@ export function BottomNavigation() {
                       }`}
                     />
                   )}
-                  {active && !item.useAvatar && (
-                    <motion.div
-                      layoutId="activeIndicator"
-                      className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary"
-                      initial={false}
-                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                    />
-                  )}
                 </div>
                 <span
-                  className={`text-[11px] font-medium transition-colors ${
+                  className={`text-[10px] font-medium transition-colors ${
                     active ? "text-primary" : "text-muted-foreground"
                   }`}
                 >
