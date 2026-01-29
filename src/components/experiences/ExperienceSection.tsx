@@ -71,11 +71,11 @@ export function ExperienceSection({ title, experiences, onSelectExperience }: Ex
         </div>
       </div>
 
-      {/* Horizontal scroll container - Airbnb-style edge-to-edge */}
-      <div className="overflow-x-auto scrollbar-hide -mr-8">
+      {/* Horizontal scroll container - Airbnb-style edge-to-edge on both sides */}
+      <div className="overflow-x-auto scrollbar-hide -mx-8">
         <div
           ref={scrollRef}
-          className="flex gap-2.5 pr-8"
+          className="flex gap-2.5 px-8"
           style={{ scrollSnapType: "x mandatory" }}
         >
           {experiences.map((experience, index) => (
