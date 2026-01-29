@@ -71,21 +71,23 @@ export function ExperienceSection({ title, experiences, onSelectExperience }: Ex
         </div>
       </div>
 
-      {/* Horizontal scroll container */}
-      <div
-        ref={scrollRef}
-        className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4 md:-mx-6 md:px-6 lg:-mx-8 lg:px-8"
-        style={{ scrollSnapType: "x mandatory" }}
-      >
-        {experiences.map((experience, index) => (
-          <div key={experience.id} style={{ scrollSnapAlign: "start" }}>
-            <ExperienceCardCompact
-              experience={experience}
-              index={index}
-              onSelect={onSelectExperience}
-            />
-          </div>
-        ))}
+      {/* Horizontal scroll container - Airbnb-style edge-to-edge */}
+      <div className="overflow-x-auto scrollbar-hide -mr-4 md:-mr-6 lg:-mr-8">
+        <div
+          ref={scrollRef}
+          className="flex gap-3 pr-4 md:pr-6 lg:pr-8"
+          style={{ scrollSnapType: "x mandatory" }}
+        >
+          {experiences.map((experience, index) => (
+            <div key={experience.id} style={{ scrollSnapAlign: "start" }}>
+              <ExperienceCardCompact
+                experience={experience}
+                index={index}
+                onSelect={onSelectExperience}
+              />
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
