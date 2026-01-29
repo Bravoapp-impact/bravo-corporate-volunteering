@@ -119,7 +119,7 @@ export default function Impact() {
           <motion.h1
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-2xl md:text-3xl font-bold text-foreground"
+            className="text-xl md:text-2xl font-bold text-foreground"
           >
             Il tuo impatto
           </motion.h1>
@@ -127,7 +127,7 @@ export default function Impact() {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-muted-foreground mt-1"
+            className="text-[13px] text-muted-foreground mt-0.5"
           >
             Il contributo che stai dando al mondo
           </motion.p>
@@ -147,10 +147,10 @@ export default function Impact() {
                     <Award className="h-5 w-5 text-bravo-purple" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-foreground">
+                    <p className="text-xl font-bold text-foreground">
                       {stats?.completedExperiences || 0}
                     </p>
-                    <p className="text-xs text-muted-foreground">Esperienze</p>
+                    <p className="text-[11px] text-muted-foreground">Esperienze</p>
                   </div>
                 </div>
               </CardContent>
@@ -169,10 +169,10 @@ export default function Impact() {
                     <Clock className="h-5 w-5 text-bravo-orange" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-foreground">
+                    <p className="text-xl font-bold text-foreground">
                       {stats?.totalVolunteerHours || 0}
                     </p>
-                    <p className="text-xs text-muted-foreground">Ore donate</p>
+                    <p className="text-[11px] text-muted-foreground">Ore donate</p>
                   </div>
                 </div>
               </CardContent>
@@ -191,10 +191,10 @@ export default function Impact() {
                     <Users className="h-5 w-5 text-bravo-pink" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-foreground">
+                    <p className="text-xl font-bold text-foreground">
                       {stats?.totalBeneficiaries || 0}
                     </p>
-                    <p className="text-xs text-muted-foreground">Beneficiari</p>
+                    <p className="text-[11px] text-muted-foreground">Beneficiari</p>
                   </div>
                 </div>
               </CardContent>
@@ -213,10 +213,10 @@ export default function Impact() {
                     <TrendingUp className="h-5 w-5 text-success" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-foreground">
+                    <p className="text-xl font-bold text-foreground">
                       {stats?.sdgContributions?.length || 0}
                     </p>
-                    <p className="text-xs text-muted-foreground">SDGs</p>
+                    <p className="text-[11px] text-muted-foreground">SDGs</p>
                   </div>
                 </div>
               </CardContent>
@@ -231,8 +231,8 @@ export default function Impact() {
           transition={{ delay: 0.3 }}
         >
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Contributo agli SDGs</CardTitle>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Contributo agli SDGs</CardTitle>
             </CardHeader>
             <CardContent>
               {stats?.sdgContributions && stats.sdgContributions.length > 0 ? (
@@ -269,9 +269,9 @@ export default function Impact() {
                 </div>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
-                  <Sprout className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                  <p className="font-medium">Nessun contributo ancora</p>
-                  <p className="text-sm mt-1">
+                  <Sprout className="h-10 w-10 mx-auto mb-2 opacity-30" />
+                  <p className="text-[13px] font-medium">Nessun contributo ancora</p>
+                  <p className="text-[12px] mt-0.5">
                     Partecipa alla tua prima esperienza per iniziare!
                   </p>
                 </div>
