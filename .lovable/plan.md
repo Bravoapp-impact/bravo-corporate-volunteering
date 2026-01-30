@@ -1,132 +1,142 @@
 
+# Piano: Popolamento Dati Demo per Presentazione
 
-# Piano: Card Esperienze Edge-to-Edge + Dimensioni Ottimizzate
-
-## Problema Identificato
-
-Dallo screenshot si vede chiaramente lo spazio rosso inutilizzato sulla destra. Ci sono due cause:
-
-### 1. Margine Negativo Insufficiente
-- Il container ha `padding: 2rem` (32px)
-- Il margine negativo attuale e `-mr-4` (16px) - solo meta
-- Le card si fermano 16px prima del bordo destro
-
-### 2. Card Troppo Larghe
-- Larghezza attuale: `165px`
-- Con 2 card + gap non c'e spazio sufficiente per il "peek" della terza
+## Obiettivo
+Creare un set di dati demo realistico per "Azienda Demo" che mostri:
+- **Scenario di crescita** dell'engagement aziendale negli ultimi 6 mesi
+- Funzionalità complete sia lato **HR Admin** che lato **Employee**
+- Dashboard ricche di metriche e grafici SDG
 
 ---
 
-## Calcoli per iPhone 375px
+## Stato Attuale
 
-```
-Schermo totale: 375px
-Padding sinistro: 32px
-Area scroll disponibile: 375 - 32 = 343px (fino al bordo destro)
-
-Target: 2 card complete + peek terza card
-
-Con card da 150px e gap 10px:
-150 + 10 + 150 + 10 + peek = 343px
-peek = 23px (troppo poco)
-
-Con card da 145px e gap 10px:
-145 + 10 + 145 + 10 + peek = 343px  
-peek = 33px (meglio, ma ancora piccolo)
-
-Con card da 140px e gap 10px:
-140 + 10 + 140 + 10 + peek = 343px
-peek = 43px (buono!)
-```
-
-**Soluzione ottimale: card da 140-145px con gap 10px**
+| Elemento | Quantità | Note |
+|----------|----------|------|
+| Azienda Demo | 1 | `666d43e5-d698-46f8-960e-eafb22d4444c` |
+| Dipendenti | 4 | Beatrice, Nicole, Luca, Test (HR) |
+| Esperienze | 3 | Tutte assegnate ad Azienda Demo |
+| Date future | 5 | Febbraio-Aprile 2026 |
+| Prenotazioni | 6 | Poche, tutte future |
 
 ---
 
-## Modifiche Necessarie
+## Piano di Implementazione
 
-### File 1: `src/components/experiences/ExperienceSection.tsx`
+### Fase 1: Nuovi Dipendenti Demo (6 profili fittizi)
 
-**Problema attuale (riga 75):**
-```tsx
-<div className="overflow-x-auto scrollbar-hide -mr-4 md:-mr-6 lg:-mr-8">
-```
+Creerò 6 nuovi profili dipendente con nomi italiani realistici per simulare un'azienda di ~10 persone:
 
-**Fix:** Il margine negativo deve essere `-mr-8` (32px) per compensare completamente il padding del container:
-```tsx
-<div className="overflow-x-auto scrollbar-hide -mr-8">
-```
+| Nome | Email | Note |
+|------|-------|------|
+| Marco Rossi | marco.rossi@demo.it | Alto engagement |
+| Giulia Verdi | giulia.verdi@demo.it | Medio engagement |
+| Alessandro Conti | alessandro.conti@demo.it | Alto engagement |
+| Francesca Romano | francesca.romano@demo.it | Nuovo, da coinvolgere |
+| Lorenzo Moretti | lorenzo.moretti@demo.it | Medio engagement |
+| Sofia Ricci | sofia.ricci@demo.it | Da coinvolgere |
 
-E aggiornare il padding destro interno per bilanciare:
-```tsx
-<div className="flex gap-2.5 pr-8">
-```
+I nuovi utenti saranno creati in `auth.users` tramite registrazione con codice accesso demo e inseriti nelle tabelle `profiles`, `user_roles` e `user_tenants`.
 
-### File 2: `src/components/experiences/ExperienceCardCompact.tsx`
+### Fase 2: Nuove Esperienze (3 aggiuntive)
 
-**Ridurre dimensioni card (riga 52):**
-```tsx
-// Da
-className="... w-[165px] sm:w-[185px] md:w-[210px] ..."
+| Esperienza | Categoria | Associazione | SDGs |
+|------------|-----------|--------------|------|
+| **Doposcuola per bambini** | Educazione e doposcuola | Il Balzo ETS | SDG 4, SDG 10 |
+| **Laboratorio di cucina solidale** | Gastronomia e cucina | La Taska Onlus | SDG 2, SDG 12 |
+| **Cura dell'orto comunitario** | Orti e apicoltura | Qiqajon Associazione Francescana | SDG 2, SDG 15, SDG 11 |
 
-// A
-className="... w-[145px] sm:w-[165px] md:w-[200px] ..."
-```
+Ogni esperienza avrà:
+- Descrizione dettagliata
+- Immagine (placeholder o URL stock)
+- Status: published
+- Assegnazione ad Azienda Demo
 
-**Ridurre dimensioni testo:**
+### Fase 3: Date Storiche (Agosto 2025 - Gennaio 2026)
 
-| Elemento | Attuale | Nuovo |
-|----------|---------|-------|
-| Titolo | `text-[15px]` | `text-[13px]` |
-| Associazione | `text-[13px]` | `text-[11px]` |
-| Data/durata | `text-[13px]` | `text-[11px]` |
-| Badge | `text-xs px-3 py-1` | `text-[10px] px-2 py-0.5` |
-| Logo assoc. | `w-4 h-4` | `w-3.5 h-3.5` |
-| Icone | `h-3 w-3` | `h-2.5 w-2.5` |
+Creerò ~15-18 date passate distribuite sugli ultimi 6 mesi per simulare lo storico:
 
-**Ridurre spacing interno:**
-```tsx
-// Da
-<div className="pt-3 space-y-1.5">
+| Mese | N° Eventi | Trend | Note |
+|------|-----------|-------|------|
+| Agosto 2025 | 1 | Inizio | Prima esperienza pilota |
+| Settembre 2025 | 2 | Crescita | Primi feedback positivi |
+| Ottobre 2025 | 2 | Stabile | |
+| Novembre 2025 | 3 | Crescita | Più partecipanti |
+| Dicembre 2025 | 3 | Alto | Eventi natalizi |
+| Gennaio 2026 | 3 | Alto | Consolidamento |
 
-// A  
-<div className="pt-2 space-y-1">
-```
+Ogni data avrà:
+- `volunteer_hours`: 2-4 ore
+- `beneficiaries_count`: 5-50 (variabile per tipo)
+- `max_participants`: 5-15
 
----
+### Fase 4: Prenotazioni Storiche (~40-50 bookings)
 
-## Risultato Atteso su iPhone 375px
+Distribuite per simulare uno **scenario di crescita**:
 
-```
-┌─────────────────────────────────────────┐
-│ 32px │ CARD 1  │10px│ CARD 2  │10px│CA│ │
-│      │  145px  │    │  145px  │    │33│ │
-│      │         │    │         │    │px│ │
-└─────────────────────────────────────────┘
-           ↑ bordo destro schermo ────────┘
-```
+**Pattern di crescita:**
+- Agosto: 2-3 prenotazioni (solo early adopters: Marco, Luca)
+- Settembre-Ottobre: 5-6 prenotazioni (si aggiungono Giulia, Nicole)
+- Novembre-Dicembre: 10-12 prenotazioni (picco, coinvolti Alessandro, Beatrice)
+- Gennaio: 8-10 prenotazioni (consolidamento)
 
-- Card 1: 145px (completa, allineata a sinistra con container)
-- Gap: 10px
-- Card 2: 145px (completa)
-- Gap: 10px
-- Card 3: ~33px peek (invita allo scroll)
+**Dipendenti "da coinvolgere":**
+- Francesca Romano: 0 partecipazioni
+- Sofia Ricci: 0 partecipazioni
+
+**Top performer:**
+- Marco Rossi: ~12 partecipazioni, ~35 ore
+- Alessandro Conti: ~10 partecipazioni, ~28 ore
 
 ---
 
-## Riepilogo File da Modificare
+## Risultati Attesi nelle Dashboard
 
-| File | Modifica |
-|------|----------|
-| `src/components/experiences/ExperienceSection.tsx` | `-mr-8` per edge-to-edge, `gap-2.5`, `pr-8` |
-| `src/components/experiences/ExperienceCardCompact.tsx` | `w-[145px]`, testi piu piccoli, spacing ridotto |
+### Dashboard HR
+- **Dipendenti registrati**: 10
+- **Tasso partecipazione**: ~80% (8 su 10 hanno partecipato)
+- **Ore volontariato totali**: ~120-150 ore
+- **Beneficiari raggiunti**: ~300-400
+- **Griglia SDG**: 8-10 SDG colorati con diversi livelli di impatto
+
+### Pagina Dipendenti HR
+- **Top performer** visibili in tabella
+- **2 dipendenti "Da coinvolgere"** con badge dedicato
+- **Filtri funzionanti** per mostrare chi non ha partecipato
+
+### Vista Employee
+- **6 esperienze** nel catalogo
+- **Storico prenotazioni** nella sezione "Le mie prenotazioni"
+- **Pagina Impatto** con statistiche personali e SDG colorati
 
 ---
 
-## Note Design
+## Dettaglio Tecnico
 
-- Il peek di ~33px e sufficiente per indicare contenuto scrollabile
-- Testi a 11-13px sono ancora leggibili su mobile (standard per caption)
-- Il gap di 10px (gap-2.5) mantiene le card separate ma compatte
-- Le proporzioni rimangono armoniche con l'immagine quadrata
+### Tabelle coinvolte:
+1. `auth.users` - Nuovi utenti (richiede signup o admin API)
+2. `profiles` - Profili dipendenti
+3. `user_roles` - Ruoli (employee)
+4. `user_tenants` - Associazione azienda
+5. `experiences` - 3 nuove esperienze
+6. `experience_companies` - Assegnazioni
+7. `experience_dates` - ~20 date (15 passate + 5 esistenti)
+8. `bookings` - ~45 prenotazioni confermate
 
+### Note sulla creazione utenti:
+Poiché non posso creare utenti in `auth.users` direttamente via SQL, le opzioni sono:
+1. **Manuale**: Creare 6 account via registrazione con codice demo
+2. **Script**: Usare la Supabase Admin API in un edge function
+3. **Workaround**: Creare solo dati nelle tabelle profiles/bookings usando gli ID degli utenti esistenti (simulazione parziale)
+
+**Raccomandazione**: Procederò con l'opzione 3 come prima fase (dati completi per gli utenti esistenti + date storiche), poi ti guiderò nella creazione degli utenti aggiuntivi se necessario.
+
+---
+
+## Prossimi Passi
+
+1. Creare 3 nuove esperienze con descrizioni e SDG
+2. Aggiungere ~15 date passate distribuite su 6 mesi
+3. Creare ~35-40 prenotazioni storiche per i 4 utenti esistenti
+4. Aggiornare `beneficiaries_count` nelle date passate
+5. (Opzionale) Guidarti nella creazione dei 6 nuovi utenti demo
