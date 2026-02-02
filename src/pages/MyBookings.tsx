@@ -24,6 +24,7 @@ interface Booking {
       description: string | null;
       image_url: string | null;
       association_name: string | null;
+      association_logo_url?: string | null;
       city: string | null;
       address: string | null;
       category: string | null;
@@ -62,7 +63,11 @@ export default function MyBookings() {
             association_name,
             city,
             address,
-            category
+            category,
+            associations:association_id (
+              name,
+              logo_url
+            )
           )
         )
       `)
@@ -70,7 +75,22 @@ export default function MyBookings() {
       .order("created_at", { ascending: false });
 
     if (!error && data) {
-      setBookings(data as unknown as Booking[]);
+      // Transform data to include association_logo_url
+      const transformedBookings = data.map((booking: any) => ({
+        ...booking,
+        experience_dates: {
+          ...booking.experience_dates,
+          experiences: {
+            ...booking.experience_dates.experiences,
+            association_name:
+              booking.experience_dates.experiences.associations?.name ||
+              booking.experience_dates.experiences.association_name,
+            association_logo_url:
+              booking.experience_dates.experiences.associations?.logo_url || null,
+          },
+        },
+      }));
+      setBookings(transformedBookings as Booking[]);
     }
     setLoading(false);
   };
