@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
-import { Camera, Loader2 } from "lucide-react";
+import { Camera, Loader2, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -106,35 +107,85 @@ export function ProfileAvatarUpload({
     }
   };
 
+  const handleRemoveAvatar = async () => {
+    if (!userId || !avatarUrl) return;
+
+    setUploading(true);
+    try {
+      // Delete avatar files from storage
+      await supabase.storage
+        .from("profile-avatars")
+        .remove([
+          `${userId}/avatar.png`,
+          `${userId}/avatar.jpg`,
+          `${userId}/avatar.jpeg`,
+        ]);
+
+      // Update profile to remove avatar URL
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({ avatar_url: null })
+        .eq("id", userId);
+
+      if (updateError) throw updateError;
+
+      await onUploadComplete();
+      toast.success("Immagine profilo rimossa!");
+    } catch (error) {
+      console.error("Error removing avatar:", error);
+      toast.error("Errore durante la rimozione dell'immagine");
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
-    <div className="relative group">
-      <Avatar className={sizeClasses[size]}>
-        <AvatarImage src={avatarUrl || undefined} alt="Avatar" />
-        <AvatarFallback
-          className={`bg-primary/10 text-primary font-medium ${fallbackTextClasses[size]}`}
+    <div className="flex items-center gap-3">
+      <div className="relative group">
+        <Avatar className={sizeClasses[size]}>
+          <AvatarImage src={avatarUrl || undefined} alt="Avatar" />
+          <AvatarFallback
+            className={`bg-primary/10 text-primary font-medium ${fallbackTextClasses[size]}`}
+          >
+            {getInitials()}
+          </AvatarFallback>
+        </Avatar>
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploading}
+          className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+          aria-label="Cambia immagine profilo"
         >
-          {getInitials()}
-        </AvatarFallback>
-      </Avatar>
-      <button
-        onClick={() => fileInputRef.current?.click()}
-        disabled={uploading}
-        className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-        aria-label="Cambia immagine profilo"
-      >
-        {uploading ? (
-          <Loader2 className="h-5 w-5 text-white animate-spin" />
-        ) : (
-          <Camera className="h-5 w-5 text-white" />
-        )}
-      </button>
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/png,image/jpeg,image/jpg"
-        onChange={handleAvatarUpload}
-        className="hidden"
-      />
+          {uploading ? (
+            <Loader2 className="h-5 w-5 text-white animate-spin" />
+          ) : (
+            <Camera className="h-5 w-5 text-white" />
+          )}
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/png,image/jpeg,image/jpg"
+          onChange={handleAvatarUpload}
+          className="hidden"
+        />
+      </div>
+      {avatarUrl && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleRemoveAvatar}
+          disabled={uploading}
+          className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+          aria-label="Rimuovi immagine profilo"
+        >
+          {uploading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Trash2 className="h-4 w-4" />
+          )}
+        </Button>
+      )}
     </div>
   );
 }
