@@ -64,10 +64,10 @@ export function EmployeeMetricsCards({
                 <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-bravo-orange" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-xl sm:text-2xl font-bold text-foreground">
+                <p className="text-xl font-bold text-foreground">
                   {avgHoursPerEmployee}h
                 </p>
-                <p className="text-xs sm:text-sm text-muted-foreground leading-tight">
+                <p className="text-[11px] text-muted-foreground leading-tight">
                   Ore Medie per Dipendente
                 </p>
               </div>
@@ -89,10 +89,10 @@ export function EmployeeMetricsCards({
                 <UserCheck className="h-5 w-5 sm:h-6 sm:w-6 text-bravo-purple" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-xl sm:text-2xl font-bold text-foreground">
+                <p className="text-xl font-bold text-foreground">
                   {activePercentage}%
                 </p>
-                <p className="text-xs sm:text-sm text-muted-foreground leading-tight">
+                <p className="text-[11px] text-muted-foreground leading-tight">
                   Dipendenti Attivi
                 </p>
               </div>
@@ -126,7 +126,7 @@ export function EmployeeMetricsCards({
                 />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-xs sm:text-sm text-muted-foreground leading-tight mb-2">
+                <p className="text-[11px] text-muted-foreground leading-tight mb-2">
                   Trend Partecipazioni
                 </p>
                 {monthlyTrend.length > 0 ? (

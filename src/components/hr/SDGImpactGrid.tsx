@@ -16,7 +16,7 @@ export function SDGImpactGrid({ sdgImpacts }: SDGImpactGridProps) {
     return (
       <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
         <CardHeader>
-          <CardTitle className="text-lg">Impatto per SDG</CardTitle>
+          <CardTitle className="text-base">Impatto per SDG</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground text-center py-8">
@@ -30,7 +30,7 @@ export function SDGImpactGrid({ sdgImpacts }: SDGImpactGridProps) {
   return (
     <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
       <CardHeader>
-        <CardTitle className="text-lg">Impatto per SDG</CardTitle>
+        <CardTitle className="text-base">Impatto per SDG</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
@@ -64,7 +64,7 @@ export function SDGImpactGrid({ sdgImpacts }: SDGImpactGridProps) {
                     <p className="text-sm font-medium text-foreground mt-0.5 line-clamp-2">
                       {sdg.name}
                     </p>
-                    <p className="text-lg font-bold mt-1" style={{ color: sdg.color }}>
+                    <p className="text-base font-bold mt-1" style={{ color: sdg.color }}>
                       {impact.hours.toFixed(1)}h
                     </p>
                   </div>

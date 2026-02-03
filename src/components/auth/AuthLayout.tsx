@@ -37,7 +37,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
             transition={{ duration: 0.8, delay: 0.2 }}
           >
             <img src={bravoLogoWhite} alt="Bravo!" className="h-12 lg:h-16 w-auto mb-6" />
-            <p className="text-xl lg:text-2xl font-light opacity-90 max-w-md leading-relaxed">
+            <p className="text-xl font-light opacity-90 max-w-md leading-relaxed">
               Esperienze sociali ad alto impatto positivo
             </p>
           </motion.div>
@@ -81,7 +81,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-2xl lg:text-3xl font-semibold text-foreground"
+              className="text-xl font-semibold text-foreground"
             >
               {title}
             </motion.h2>

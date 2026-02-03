@@ -119,7 +119,7 @@ export default function Impact() {
           <motion.h1
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-xl md:text-2xl font-bold text-foreground"
+            className="text-xl font-bold text-foreground"
           >
             Il tuo impatto
           </motion.h1>
