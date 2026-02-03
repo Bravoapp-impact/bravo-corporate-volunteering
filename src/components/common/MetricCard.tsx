@@ -38,10 +38,10 @@ export function MetricCard({
               <Icon className={`h-5 w-5 sm:h-6 sm:w-6 ${iconColor}`} />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xl sm:text-2xl font-bold text-foreground">
+              <p className="text-xl font-bold text-foreground">
                 {value}
               </p>
-              <p className="text-xs sm:text-sm text-muted-foreground leading-tight">
+              <p className="text-[11px] text-muted-foreground leading-tight">
                 {label}
               </p>
               {subLabel && (

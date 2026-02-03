@@ -130,7 +130,7 @@ export default function Experiences() {
         animate={{ opacity: 1, y: 0 }}
         className="mb-6"
       >
-        <h1 className="text-xl md:text-2xl font-bold text-foreground mb-0.5">
+        <h1 className="text-xl font-bold text-foreground mb-0.5">
           Esperienze di volontariato
         </h1>
         <p className="text-[13px] text-muted-foreground">

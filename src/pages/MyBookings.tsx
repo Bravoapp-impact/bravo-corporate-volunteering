@@ -143,7 +143,7 @@ export default function MyBookings() {
         animate={{ opacity: 1, y: 0 }}
         className="mb-6"
       >
-        <h1 className="text-xl md:text-2xl font-bold text-foreground mb-0.5">
+        <h1 className="text-xl font-bold text-foreground mb-0.5">
           Le mie prenotazioni
         </h1>
         <p className="text-[13px] text-muted-foreground">

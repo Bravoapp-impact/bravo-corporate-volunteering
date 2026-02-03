@@ -152,24 +152,38 @@ letter-spacing: -0.3px;
 line-height: 1.3em;
 ```
 
-### Dimensioni - Mobile First
+### Dimensioni - Scala Unificata
 
-L'app segue uno stile compatto e moderno. Le dimensioni sono pensate per mobile e poi scalate su desktop.
+L'app segue una scala tipografica **unificata** su tutti i dispositivi (mobile, tablet, desktop) per garantire consistenza visiva.
 
-| Utilizzo | Mobile | Desktop | Esempio |
-|----------|--------|---------|---------|
-| Titolo pagina | `text-xl font-bold` | `md:text-2xl` | "Esperienze di volontariato" |
-| Sottotitolo pagina | `text-[13px] text-muted-foreground` | - | "Scopri le opportunità disponibili" |
-| Titolo sezione | `text-base font-semibold` | `md:text-lg` | "Prossime esperienze" |
-| Titolo card | `text-[13px] font-medium` | - | Titolo esperienza |
-| Testo secondario card | `text-[11px] text-muted-foreground font-light` | - | Associazione, data, durata |
-| Badge card | `text-[10px] font-medium` | - | Categoria |
-| Card metriche value | `text-xl font-bold` | `md:text-2xl` | "245" |
-| Card metriche label | `text-[11px] text-muted-foreground` | - | "Ore donate" |
-| Empty state title | `text-base font-semibold` | - | "Nessuna prenotazione" |
-| Empty state desc | `text-[13px] text-muted-foreground` | - | Descrizione |
-| Input placeholder | `text-[13px]` | - | "Cerca..." |
-| Bottom nav label | `text-[10px] font-medium` | - | "Esplora", "Prenotazioni" |
+**⚠️ IMPORTANTE: NON usare breakpoint responsivi per i font (es. `sm:text-*`, `md:text-*`, `lg:text-*`).**
+
+| Utilizzo | Classe | Esempio |
+|----------|--------|---------|
+| Titolo pagina | `text-xl font-bold tracking-tight` | "Esperienze di volontariato" |
+| Sottotitolo pagina | `text-[13px] text-muted-foreground` | "Scopri le opportunità disponibili" |
+| Titolo sezione | `text-base font-semibold` | "Prossime esperienze" |
+| Titolo card | `text-[13px] font-medium` | Titolo esperienza |
+| Testo secondario card | `text-[11px] text-muted-foreground font-light` | Associazione, data, durata |
+| Badge card | `text-[10px] font-medium` | Categoria |
+| Card metriche value | `text-xl font-bold` | "245" |
+| Card metriche label | `text-[11px] text-muted-foreground` | "Ore donate" |
+| Empty state title | `text-base font-semibold` | "Nessuna prenotazione" |
+| Empty state desc | `text-[13px] text-muted-foreground` | Descrizione |
+| Input placeholder | `text-[13px]` | "Cerca..." |
+| Bottom nav label | `text-[10px] font-medium` | "Esplora", "Prenotazioni" |
+
+### Pattern da Evitare
+
+```tsx
+// ❌ NON FARE - breakpoint responsivi per font
+<h1 className="text-xl md:text-2xl lg:text-3xl">Titolo</h1>
+<p className="text-sm sm:text-base">Descrizione</p>
+
+// ✅ FARE - dimensioni fisse unificate
+<h1 className="text-xl font-bold tracking-tight">Titolo</h1>
+<p className="text-[13px] text-muted-foreground">Descrizione</p>
+```
 
 ### Icone - Dimensioni Compatte
 

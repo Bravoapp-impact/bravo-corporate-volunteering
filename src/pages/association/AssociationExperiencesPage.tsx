@@ -111,8 +111,8 @@ export default function AssociationExperiencesPage() {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Esperienze</h1>
-          <p className="text-muted-foreground mt-1 text-sm sm:text-base">
+          <h1 className="text-xl font-bold text-foreground">Esperienze</h1>
+          <p className="text-muted-foreground mt-1 text-[13px]">
             Le esperienze di volontariato gestite dalla tua associazione
           </p>
         </motion.div>
