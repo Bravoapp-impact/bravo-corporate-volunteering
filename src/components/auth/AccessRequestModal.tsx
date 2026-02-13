@@ -8,6 +8,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { BaseModal } from "@/components/common/BaseModal";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { z } from "zod";
+
+const accessRequestSchema = z.object({
+  firstName: z.string().trim().max(100, "Nome troppo lungo").optional(),
+  lastName: z.string().trim().max(100, "Cognome troppo lungo").optional(),
+  email: z.string().trim().email("Email non valida").max(255, "Email troppo lunga"),
+  phone: z.string().trim().max(30, "Telefono troppo lungo").optional(),
+  city: z.string().trim().max(100, "Città troppo lunga").optional(),
+  companyName: z.string().trim().max(200, "Nome azienda troppo lungo").optional(),
+  associationName: z.string().trim().max(200, "Nome associazione troppo lungo").optional(),
+  roleInCompany: z.string().trim().max(100, "Ruolo troppo lungo").optional(),
+  message: z.string().trim().max(1000, "Messaggio troppo lungo (max 1000 caratteri)").optional(),
+});
 
 type RequestType = "employee_needs_code" | "company_lead" | "association_lead" | "individual_waitlist";
 
@@ -118,29 +131,41 @@ export function AccessRequestModal({ open, onClose }: AccessRequestModalProps) {
     setIsSubmitting(true);
 
     try {
+      const validated = accessRequestSchema.parse(formData);
+
       const { error } = await supabase.from("access_requests").insert({
         request_type: requestType,
-        first_name: formData.firstName || null,
-        last_name: formData.lastName || null,
-        email: formData.email,
-        phone: formData.phone || null,
-        city: formData.city || null,
-        company_name: formData.companyName || null,
-        association_name: formData.associationName || null,
-        role_in_company: formData.roleInCompany || null,
-        message: formData.message || null,
+        first_name: validated.firstName || null,
+        last_name: validated.lastName || null,
+        email: validated.email,
+        phone: validated.phone || null,
+        city: validated.city || null,
+        company_name: validated.companyName || null,
+        association_name: validated.associationName || null,
+        role_in_company: validated.roleInCompany || null,
+        message: validated.message || null,
       });
 
       if (error) throw error;
 
       setStep(3);
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Errore",
-        description: "Si è verificato un errore. Riprova più tardi.",
-        duration: 3000,
-      });
+      if (error instanceof z.ZodError) {
+        const firstError = error.errors[0]?.message || "Dati non validi";
+        toast({
+          variant: "destructive",
+          title: "Dati non validi",
+          description: firstError,
+          duration: 3000,
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Errore",
+          description: "Si è verificato un errore. Riprova più tardi.",
+          duration: 3000,
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
