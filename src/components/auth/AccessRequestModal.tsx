@@ -10,6 +10,9 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
 
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
 const accessRequestSchema = z.object({
   firstName: z.string().trim().max(100, "Nome troppo lungo").optional(),
   lastName: z.string().trim().max(100, "Cognome troppo lungo").optional(),
@@ -133,20 +136,30 @@ export function AccessRequestModal({ open, onClose }: AccessRequestModalProps) {
     try {
       const validated = accessRequestSchema.parse(formData);
 
-      const { error } = await supabase.from("access_requests").insert({
-        request_type: requestType,
-        first_name: validated.firstName || null,
-        last_name: validated.lastName || null,
-        email: validated.email,
-        phone: validated.phone || null,
-        city: validated.city || null,
-        company_name: validated.companyName || null,
-        association_name: validated.associationName || null,
-        role_in_company: validated.roleInCompany || null,
-        message: validated.message || null,
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/submit-access-request`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify({
+          request_type: requestType,
+          first_name: validated.firstName || null,
+          last_name: validated.lastName || null,
+          email: validated.email,
+          phone: validated.phone || null,
+          city: validated.city || null,
+          company_name: validated.companyName || null,
+          association_name: validated.associationName || null,
+          role_in_company: validated.roleInCompany || null,
+          message: validated.message || null,
+        }),
       });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Errore durante l'invio");
+      }
 
       setStep(3);
     } catch (error: any) {

@@ -6,15 +6,36 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AuthLayout } from "@/components/auth/AuthLayout";
+import { ChallengeMFA } from "@/components/auth/ChallengeMFA";
 import { signIn } from "@/lib/auth";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showMFAChallenge, setShowMFAChallenge] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const navigateByRole = async (userId: string) => {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", userId)
+      .single();
+
+    if (profile?.role === "super_admin") {
+      navigate("/super-admin");
+    } else if (profile?.role === "hr_admin") {
+      navigate("/hr");
+    } else if (profile?.role === "association_admin") {
+      navigate("/association");
+    } else {
+      navigate("/app/experiences");
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,26 +43,25 @@ export default function Login() {
 
     try {
       const result = await signIn({ email, password });
+      
+      // Check MFA status
+      const { data: aalData, error: aalError } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      
+      if (!aalError && aalData?.nextLevel === "aal2" && aalData?.currentLevel === "aal1") {
+        // MFA required - show challenge screen
+        setShowMFAChallenge(true);
+        setIsLoading(false);
+        return;
+      }
+
       toast({
         title: "Benvenuto!",
         description: "Accesso effettuato con successo.",
       });
 
-      // Redirect based on role
       const user = result?.user;
       if (user) {
-        const { supabase } = await import("@/integrations/supabase/client");
-        const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-
-        if (profile?.role === "super_admin") {
-          navigate("/super-admin");
-        } else if (profile?.role === "hr_admin") {
-          navigate("/hr");
-        } else if (profile?.role === "association_admin") {
-          navigate("/association");
-        } else {
-          navigate("/app/experiences");
-        }
+        await navigateByRole(user.id);
       } else {
         navigate("/app/experiences");
       }
@@ -55,6 +75,29 @@ export default function Login() {
       setIsLoading(false);
     }
   };
+
+  const handleMFASuccess = async () => {
+    toast({
+      title: "Benvenuto!",
+      description: "Accesso effettuato con successo.",
+    });
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await navigateByRole(user.id);
+    } else {
+      navigate("/app/experiences");
+    }
+  };
+
+  const handleMFACancel = async () => {
+    await supabase.auth.signOut();
+    setShowMFAChallenge(false);
+  };
+
+  if (showMFAChallenge) {
+    return <ChallengeMFA onSuccess={handleMFASuccess} onCancel={handleMFACancel} />;
+  }
 
   return (
     <AuthLayout title="Bentornato" subtitle="Inserisci i tuoi dati per accedere">

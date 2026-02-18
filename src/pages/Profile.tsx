@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ProfileAvatarUpload } from "@/components/profile/ProfileAvatarUpload";
 import { ProfileEditForm } from "@/components/profile/ProfileEditForm";
+import { EnrollMFA } from "@/components/auth/EnrollMFA";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function Profile() {
@@ -145,11 +146,20 @@ export default function Profile() {
           </Card>
         </motion.div>
 
-        {/* Logout */}
+        {/* MFA Security */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
+        >
+          <EnrollMFA />
+        </motion.div>
+
+        {/* Logout */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
         >
           <Button
             variant="outline"
