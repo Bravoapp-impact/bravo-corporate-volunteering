@@ -38,6 +38,7 @@ import AssociationAdminProfile from "./pages/association/AssociationAdminProfile
 import HRProfile from "./pages/hr/HRProfile";
 import AccessRequestsPage from "./pages/super-admin/AccessRequestsPage";
 import NotFound from "./pages/NotFound";
+import AuthCallback from "./pages/AuthCallback";
 
 const queryClient = new QueryClient();
 
@@ -50,6 +51,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />

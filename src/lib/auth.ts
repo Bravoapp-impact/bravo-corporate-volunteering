@@ -63,7 +63,7 @@ export async function signUp({ email, password, firstName, lastName, accessCode 
     email,
     password,
     options: {
-      emailRedirectTo: window.location.origin,
+      emailRedirectTo: `${window.location.origin}/auth/callback`,
       data: userMetadata,
     },
   });
