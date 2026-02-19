@@ -67,8 +67,8 @@ export default function Register() {
       });
 
       toast({
-        title: "Registrazione completata!",
-        description: `Benvenuto in ${result.entityName}. Ora puoi accedere.`,
+        title: "Registrazione completata! 🎉",
+        description: `Abbiamo inviato un'email di conferma a ${formData.email}. Clicca il link nell'email per attivare il tuo account e accedere.`,
       });
 
       // Redirect based on role
