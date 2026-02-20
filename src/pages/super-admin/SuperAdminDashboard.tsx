@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Building2,
@@ -182,34 +183,34 @@ export default function SuperAdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <a
-                  href="/super-admin/companies"
+                <Link
+                  to="/super-admin/companies"
                   className="flex items-center gap-3 p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
                 >
                   <Building2 className="h-5 w-5 text-primary" />
                   <span className="font-medium">Gestisci Aziende</span>
-                </a>
-                <a
-                  href="/super-admin/experiences"
+                </Link>
+                <Link
+                  to="/super-admin/experiences"
                   className="flex items-center gap-3 p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
                 >
                   <Calendar className="h-5 w-5 text-primary" />
                   <span className="font-medium">Gestisci Esperienze</span>
-                </a>
-                <a
-                  href="/super-admin/assignments"
+                </Link>
+                <Link
+                  to="/super-admin/assignments"
                   className="flex items-center gap-3 p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
                 >
                   <TrendingUp className="h-5 w-5 text-primary" />
                   <span className="font-medium">Assegna Esperienze</span>
-                </a>
-                <a
-                  href="/super-admin/users"
+                </Link>
+                <Link
+                  to="/super-admin/users"
                   className="flex items-center gap-3 p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
                 >
                   <Users className="h-5 w-5 text-primary" />
                   <span className="font-medium">Visualizza Utenti</span>
-                </a>
+                </Link>
               </div>
             </CardContent>
           </Card>

@@ -4,27 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { BaseCardImage } from "@/components/common/BaseCardImage";
 import { format, differenceInMinutes } from "date-fns";
 import { it } from "date-fns/locale";
-
-interface ExperienceDate {
-  id: string;
-  start_datetime: string;
-  end_datetime: string;
-  max_participants: number;
-  confirmed_count?: number;
-}
-
-interface Experience {
-  id: string;
-  title: string;
-  description: string | null;
-  image_url: string | null;
-  association_name: string | null;
-  association_logo_url?: string | null;
-  city: string | null;
-  address: string | null;
-  category: string | null;
-  experience_dates?: ExperienceDate[];
-}
+import type { Experience, ExperienceDate } from "@/types/experiences";
 
 interface ExperienceCardCompactProps {
   experience: Experience;
@@ -43,31 +23,41 @@ export function ExperienceCardCompact({ experience, index, onSelect }: Experienc
     ? Math.round(differenceInMinutes(new Date(nextDate.end_datetime), new Date(nextDate.start_datetime)) / 60)
     : null;
 
+  const isFull = availableSpots <= 0;
+
   return (
     <motion.button
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: index * 0.05 }}
+      transition={{ duration: 0.3, delay: Math.min(index * 0.05, 0.3) }}
       onClick={() => onSelect(experience)}
-      className="group flex-shrink-0 w-[145px] sm:w-[165px] md:w-[200px] text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-2xl"
+      className={`group flex-shrink-0 w-[145px] sm:w-[165px] md:w-[200px] text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-2xl ${isFull ? "opacity-60" : ""}`}
     >
-      {/* Square Image with category badge */}
-      <BaseCardImage
-        imageUrl={experience.image_url}
-        alt={experience.title}
-        aspectRatio="square"
-        badge={
-          experience.category ? (
-          <Badge
-              variant="secondary"
-              className="text-[10px] font-medium bg-white/95 text-foreground backdrop-blur-sm rounded-full px-2 py-0.5 shadow-sm"
-            >
-              {experience.category}
-            </Badge>
-          ) : null
-        }
-        badgePosition="top-left"
-      />
+      {/* Square Image with category badge + "Completo" overlay */}
+      <div className="relative">
+        <BaseCardImage
+          imageUrl={experience.image_url}
+          alt={experience.title}
+          aspectRatio="square"
+          badge={
+            experience.category ? (
+            <Badge
+                variant="secondary"
+                className="text-[10px] font-medium bg-white/95 text-foreground backdrop-blur-sm rounded-full px-2 py-0.5 shadow-sm"
+              >
+                {experience.category}
+              </Badge>
+            ) : null
+          }
+          badgePosition="top-left"
+        />
+        {/* "Completo" overlay badge */}
+        {isFull && (
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-destructive/90 text-destructive-foreground text-[10px] font-semibold px-2.5 py-0.5 rounded-full backdrop-blur-sm whitespace-nowrap">
+            Completo
+          </div>
+        )}
+      </div>
 
       {/* Content */}
       <div className="pt-2 space-y-1">
@@ -111,11 +101,15 @@ export function ExperienceCardCompact({ experience, index, onSelect }: Experienc
                 </span>
               </>
             )}
-            <span className="text-border">·</span>
-            <span className={`flex items-center gap-0.5 ${availableSpots <= 3 ? "text-destructive font-normal" : ""}`}>
-              <Users className="h-2.5 w-2.5" />
-              {availableSpots}
-            </span>
+            {!isFull && (
+              <>
+                <span className="text-border">·</span>
+                <span className={`flex items-center gap-0.5 ${availableSpots <= 3 ? "text-destructive font-normal" : ""}`}>
+                  <Users className="h-2.5 w-2.5" />
+                  {availableSpots}
+                </span>
+              </>
+            )}
           </div>
         )}
       </div>

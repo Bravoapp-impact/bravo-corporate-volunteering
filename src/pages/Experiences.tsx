@@ -7,31 +7,11 @@ import { ExperienceSection } from "@/components/experiences/ExperienceSection";
 import { ExperienceDetailModal } from "@/components/experiences/ExperienceDetailModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
-
-interface ExperienceDate {
-  id: string;
-  start_datetime: string;
-  end_datetime: string;
-  max_participants: number;
-  confirmed_count?: number;
-}
+import { devLog } from "@/lib/logger";
+import type { Experience, ExperienceDate } from "@/types/experiences";
 
 interface ExperienceDateRow extends ExperienceDate {
   experience_id: string;
-}
-
-interface Experience {
-  id: string;
-  title: string;
-  description: string | null;
-  image_url: string | null;
-  association_name: string | null;
-  association_logo_url?: string | null;
-  city: string | null;
-  address: string | null;
-  category: string | null;
-  sdgs?: string[];
-  experience_dates?: ExperienceDate[];
 }
 
 export default function Experiences() {
@@ -106,7 +86,7 @@ export default function Experiences() {
         })),
       );
     } catch (error) {
-      console.error("Error fetching experiences:", error);
+      devLog.error("Error fetching experiences:", error);
       setExperiences([]);
     } finally {
       setLoading(false);
@@ -163,6 +143,14 @@ export default function Experiences() {
               </div>
             ))}
           </div>
+        </div>
+      ) : experiences.length === 0 ? (
+        <div className="text-center py-16">
+          <p className="text-4xl mb-4">🌱</p>
+          <h3 className="text-base font-semibold mb-1">Nessuna esperienza disponibile</h3>
+          <p className="text-[13px] text-muted-foreground">
+            Non ci sono ancora esperienze disponibili per la tua azienda. Torna presto!
+          </p>
         </div>
       ) : filteredExperiences.length === 0 ? (
         <div className="text-center py-16">

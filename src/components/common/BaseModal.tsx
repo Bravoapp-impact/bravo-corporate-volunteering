@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -24,6 +24,16 @@ export function BaseModal({
   showCloseButton = true,
   className,
 }: BaseModalProps) {
+  // Lock body scroll when modal is open (prevents scroll-through on iOS)
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = "hidden";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
+
   if (!open) return null;
 
   const hasHeader = showBackButton || title;

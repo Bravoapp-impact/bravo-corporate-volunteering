@@ -12,27 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { SDG_DATA } from "@/lib/sdg-data";
 
-interface ExperienceDate {
-  id: string;
-  start_datetime: string;
-  end_datetime: string;
-  max_participants: number;
-  confirmed_count?: number;
-}
-
-interface Experience {
-  id: string;
-  title: string;
-  description: string | null;
-  image_url: string | null;
-  association_name: string | null;
-  association_logo_url?: string | null;
-  city: string | null;
-  address: string | null;
-  category: string | null;
-  sdgs?: string[];
-  experience_dates?: ExperienceDate[];
-}
+import type { Experience, ExperienceDate } from "@/types/experiences";
 
 interface ExperienceDetailModalProps {
   experience: Experience | null;
@@ -73,20 +53,27 @@ export function ExperienceDetailModal({
 
         if (error) throw error;
 
-        const datesWithCount = await Promise.all(
-          (data || []).map(async (date) => {
-            const { count } = await supabase
-              .from("bookings")
-              .select("*", { count: "exact", head: true })
-              .eq("experience_date_id", date.id)
-              .eq("status", "confirmed");
+        // Batch: fetch all confirmed booking counts in a single query
+        const dateIds = (data || []).map((d) => d.id);
+        const confirmedCountsMap = new Map<string, number>();
 
-            return {
-              ...date,
-              confirmed_count: count || 0,
-            };
-          })
-        );
+        if (dateIds.length > 0) {
+          const { data: confirmedBookings } = await supabase
+            .from("bookings")
+            .select("experience_date_id")
+            .in("experience_date_id", dateIds)
+            .eq("status", "confirmed");
+
+          (confirmedBookings || []).forEach((b) => {
+            const prev = confirmedCountsMap.get(b.experience_date_id) || 0;
+            confirmedCountsMap.set(b.experience_date_id, prev + 1);
+          });
+        }
+
+        const datesWithCount = (data || []).map((date) => ({
+          ...date,
+          confirmed_count: confirmedCountsMap.get(date.id) || 0,
+        }));
 
         setDates(datesWithCount);
         

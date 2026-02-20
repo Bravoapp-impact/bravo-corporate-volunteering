@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { getSDGInfo } from "@/lib/sdg-data";
+import { devLog } from "@/lib/logger";
 
 interface ImpactStats {
   completedExperiences: number;
@@ -86,7 +87,7 @@ export default function Impact() {
         sdgContributions,
       });
     } catch (error) {
-      console.error("Error fetching impact stats:", error);
+      devLog.error("Error fetching impact stats:", error);
     } finally {
       setLoading(false);
     }
