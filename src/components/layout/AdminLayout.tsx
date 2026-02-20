@@ -7,6 +7,7 @@ import {
   Menu,
   X,
   ChevronRight,
+  LayoutGrid,
   LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -200,6 +201,13 @@ export function AdminLayout({
               >
                 <User className="mr-2 h-4 w-4" />
                 Il mio profilo
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => navigate("/app/experiences")}
+                className="cursor-pointer"
+              >
+                <LayoutGrid className="mr-2 h-4 w-4" />
+                Esplora esperienze
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
