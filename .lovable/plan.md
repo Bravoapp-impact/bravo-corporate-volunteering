@@ -1,52 +1,40 @@
+
 ## Obiettivo
 
-Aggiungere un punto di accesso alla vista dipendente (Esperienze, Prenotazioni, Impatto) per tutti e tre i ruoli admin, senza toccare i flussi esistenti o le route protette.
+Chiudere automaticamente la modale dei dettagli prenotazione subito dopo una cancellazione riuscita, in modo che il toaster "Prenotazione annullata" sia visibile senza la modale davanti.
 
 ## Analisi
 
-- Le route `/app/experiences`, `/app/bookings`, `/app/impact` usano `ProtectedRoute` che controlla solo l'autenticazione (non il ruolo), quindi gli admin possono già accedervi tecnicamente.
-- Il blocco è solo nell'assenza di un link/bottone nella UI admin.
-- Il modo più pulito e coerente con l'esistente è aggiungere una voce nel **dropdown menu utente** in fondo alla sidebar di `AdminLayout`, che già contiene "Il mio profilo" e "Esci".
+In `src/pages/MyBookings.tsx`, la funzione `handleCancel`:
+1. Chiama il DB per aggiornare lo status a `cancelled`
+2. Mostra il toast di successo
+3. Richiama `fetchBookings()` per aggiornare la lista
 
-## Soluzione
-
-Aggiungere una voce **"Esplora esperienze"** nel dropdown utente in fondo alla sidebar di `AdminLayout`, visibile per tutti e tre i ruoli admin. Un click naviga a `/app/experiences` nell'`AppLayout` standard (con la bottom navigation e il menu per mobile).
-
-### Perché il dropdown è la scelta giusta
-
-- Non occupa spazio nella sidebar principale (già abbastanza affollata per Super Admin).
-- È già il posto dove si trova "Il mio profilo" — logicamente coerente come area delle opzioni utente.
-- Non richiede nuovi componenti, solo una nuova `DropdownMenuItem`.
-- Su mobile, la sidebar si apre con il hamburger menu e il dropdown è raggiungibile facilmente.
+Manca solo `setSelectedBooking(null)` per chiudere la modale dopo il successo.
 
 ## Modifica tecnica
 
-**File:** `src/components/layout/AdminLayout.tsx`
+**File:** `src/pages/MyBookings.tsx` — funzione `handleCancel`, nel blocco `try` dopo il toast:
 
-Nel `DropdownMenuContent`, aggiungere una nuova `DropdownMenuItem` con icona `LayoutGrid` (o `Sprout`) sopra al separatore già esistente:
+```typescript
+// Prima (attuale):
+toast({
+  title: "Prenotazione annullata",
+  description: "La tua prenotazione è stata annullata con successo.",
+});
+fetchBookings();
 
-```
-<DropdownMenuItem
-  onClick={() => navigate("/app/experiences")}
-  className="cursor-pointer"
->
-  <LayoutGrid className="mr-2 h-4 w-4" />
-  Esplora esperienze
-</DropdownMenuItem>
-<DropdownMenuSeparator />
+// Dopo:
+toast({
+  title: "Prenotazione annullata",
+  description: "La tua prenotazione è stata annullata con successo.",
+});
+setSelectedBooking(null); // ← chiude la modale
+fetchBookings();
 ```
 
-Il risultato nel dropdown sarà:
-
-```
-┌─────────────────────────┐
-│ Il mio profilo          │
-│ Esplora esperienze      │
-├─────────────────────────┤
-│ Esci                    │
-└─────────────────────────┘
-```
+Una singola riga aggiuntiva. La modale si chiuderà e il toaster sarà immediatamente visibile.
 
 ## File modificati
 
-- `src/components/layout/AdminLayout.tsx` — aggiunta di una `DropdownMenuItem` nel menu utente in fondo alla sidebar (un'unica modifica, si applica automaticamente a Super Admin, HR Admin e Association Admin).
+- `src/pages/MyBookings.tsx` — aggiunta di `setSelectedBooking(null)` nella funzione `handleCancel` dopo il toast di successo.
