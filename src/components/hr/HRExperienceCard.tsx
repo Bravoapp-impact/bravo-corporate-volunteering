@@ -88,7 +88,7 @@ export function HRExperienceCard({ experience }: HRExperienceCardProps) {
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <h3 className="font-semibold text-foreground text-lg leading-tight">
+                    <h3 className="font-semibold text-foreground text-base leading-tight">
                       {experience.title}
                     </h3>
                     <div className="flex flex-wrap items-center gap-2 mt-2">
@@ -134,13 +134,13 @@ export function HRExperienceCard({ experience }: HRExperienceCardProps) {
                 </div>
 
                 {/* Quick stats */}
-                <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground">
+                <div className="flex items-center gap-4 mt-3 text-[13px] text-muted-foreground">
                   <span className="flex items-center gap-1">
-                    <Calendar className="h-4 w-4" />
+                    <Calendar className="h-2.5 w-2.5" />
                     {futureDates.length} eventi futuri
                   </span>
                   <span className="flex items-center gap-1">
-                    <Users className="h-4 w-4" />
+                    <Users className="h-2.5 w-2.5" />
                     {experience.dates.reduce(
                       (sum, d) =>
                         sum + d.bookings.filter((b) => b.status === "confirmed").length,
@@ -184,12 +184,12 @@ export function HRExperienceCard({ experience }: HRExperienceCardProps) {
                       )}
                     >
                       {experience.description && (
-                        <p className="text-muted-foreground text-sm leading-relaxed">
+                        <p className="text-muted-foreground text-[13px] leading-relaxed">
                           {experience.description}
                         </p>
                       )}
                       {experience.address && (
-                        <p className="text-sm flex items-center gap-2">
+                        <p className="text-[13px] flex items-center gap-2">
                           <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
                           <span className="text-foreground">{experience.address}</span>
                         </p>
@@ -258,7 +258,7 @@ export function HRExperienceCard({ experience }: HRExperienceCardProps) {
                                       { locale: it }
                                     )}
                                   </p>
-                                  <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                                  <div className="flex items-center gap-2 text-[13px] text-muted-foreground mt-1">
                                     <Clock className="h-3 w-3" />
                                     {format(new Date(date.start_datetime), "HH:mm")} -{" "}
                                     {format(new Date(date.end_datetime), "HH:mm")}
@@ -269,7 +269,7 @@ export function HRExperienceCard({ experience }: HRExperienceCardProps) {
                                     </p>
                                   )}
                                 </div>
-                                <ChevronRight className="h-4 w-4 text-muted-foreground group-hover/date:text-primary transition-colors shrink-0 mt-1" />
+                                <ChevronRight className="h-4 w-4 text-muted-foreground group-hover/date:text-muted-foreground/70 transition-colors shrink-0 mt-1" />
                               </div>
 
                               {/* Fill rate bar */}

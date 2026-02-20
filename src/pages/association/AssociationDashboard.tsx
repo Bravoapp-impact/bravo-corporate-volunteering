@@ -68,29 +68,35 @@ export default function AssociationDashboard() {
         return;
       }
 
-      // Get confirmed bookings count for each date
-      const datesWithCounts = await Promise.all(
-        (dates || []).map(async (date) => {
-          const { count } = await supabase
-            .from("bookings")
-            .select("*", { count: "exact", head: true })
-            .eq("experience_date_id", date.id)
-            .eq("status", "confirmed");
+      const dateList = dates || [];
+      const dateIds = dateList.map((d) => d.id);
 
-          return {
-            id: date.id,
-            start_datetime: date.start_datetime,
-            end_datetime: date.end_datetime,
-            max_participants: date.max_participants,
-            confirmed_count: count || 0,
-            experience: {
-              id: date.experiences.id,
-              title: date.experiences.title,
-              city: date.experiences.city,
-            },
-          };
-        })
-      );
+      // Batch query: get all confirmed bookings in one request
+      let confirmedCountMap: Record<string, number> = {};
+      if (dateIds.length > 0) {
+        const { data: bookingsData } = await supabase
+          .from("bookings")
+          .select("experience_date_id")
+          .in("experience_date_id", dateIds)
+          .eq("status", "confirmed");
+
+        (bookingsData || []).forEach((b) => {
+          confirmedCountMap[b.experience_date_id] = (confirmedCountMap[b.experience_date_id] || 0) + 1;
+        });
+      }
+
+      const datesWithCounts: UpcomingDate[] = dateList.map((date) => ({
+        id: date.id,
+        start_datetime: date.start_datetime,
+        end_datetime: date.end_datetime,
+        max_participants: date.max_participants,
+        confirmed_count: confirmedCountMap[date.id] || 0,
+        experience: {
+          id: (date.experiences as any).id,
+          title: (date.experiences as any).title,
+          city: (date.experiences as any).city,
+        },
+      }));
 
       setUpcomingDates(datesWithCounts);
     } catch (error) {
@@ -151,17 +157,17 @@ export default function AssociationDashboard() {
                           {date.experience.title}
                         </h4>
                         <div className="flex flex-wrap items-center gap-2 mt-1">
-                          <span className="text-sm text-muted-foreground">
+                          <span className="text-[13px] text-muted-foreground">
                             {format(new Date(date.start_datetime), "EEEE d MMMM yyyy", { locale: it })}
                           </span>
                           <span className="text-muted-foreground">•</span>
-                          <span className="text-sm text-muted-foreground">
+                          <span className="text-[13px] text-muted-foreground">
                             {format(new Date(date.start_datetime), "HH:mm")} - {format(new Date(date.end_datetime), "HH:mm")}
                           </span>
                           {date.experience.city && (
                             <>
                               <span className="text-muted-foreground">•</span>
-                              <span className="text-sm text-muted-foreground">
+                              <span className="text-[13px] text-muted-foreground">
                                 {date.experience.city}
                               </span>
                             </>

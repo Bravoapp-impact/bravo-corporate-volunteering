@@ -48,11 +48,11 @@ export default function HRProfile() {
                   />
                 )}
                 <div>
-                  <p className="text-lg font-semibold text-foreground">
+                  <p className="text-base font-semibold text-foreground">
                     {profile?.first_name} {profile?.last_name}
                   </p>
-                  <p className="text-sm text-muted-foreground">{profile?.email}</p>
-                  <p className="text-xs text-primary mt-1">HR Admin</p>
+                  <p className="text-[13px] text-muted-foreground">{profile?.email}</p>
+                  <p className="text-[11px] text-muted-foreground mt-1">HR Admin</p>
                 </div>
               </div>
               <p className="text-xs text-muted-foreground mt-3">
@@ -87,22 +87,22 @@ export default function HRProfile() {
         >
           <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
             <CardHeader>
-              <CardTitle className="text-lg">Informazioni account</CardTitle>
+            <CardTitle className="text-base font-semibold">Informazioni account</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-3">
                 <Mail className="h-5 w-5 text-muted-foreground" />
                 <div>
-                  <p className="text-sm font-medium text-foreground">Email</p>
-                  <p className="text-sm text-muted-foreground">{profile?.email}</p>
+                  <p className="text-[13px] font-medium text-foreground">Email</p>
+                  <p className="text-[13px] text-muted-foreground">{profile?.email}</p>
                 </div>
               </div>
               <Separator />
               <div className="flex items-center gap-3">
                 <Building2 className="h-5 w-5 text-muted-foreground" />
                 <div>
-                  <p className="text-sm font-medium text-foreground">Azienda</p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-[13px] font-medium text-foreground">Azienda</p>
+                  <p className="text-[13px] text-muted-foreground">
                     {profile?.companies?.name || "Non associata"}
                   </p>
                 </div>

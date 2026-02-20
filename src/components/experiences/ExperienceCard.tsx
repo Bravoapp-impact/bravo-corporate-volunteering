@@ -50,26 +50,26 @@ export function ExperienceCard({ experience, index, onSelect }: ExperienceCardPr
       <div className="p-6 space-y-4">
         {/* Association */}
         {experience.association_name && (
-          <p className="text-sm font-medium text-primary">
+          <p className="text-[11px] font-medium text-muted-foreground">
             {experience.association_name}
           </p>
         )}
 
         {/* Title */}
-        <h3 className="text-xl font-semibold text-foreground line-clamp-2">
+        <h3 className="text-base font-semibold text-foreground line-clamp-2">
           {experience.title}
         </h3>
 
         {/* Description */}
         {experience.description && (
-          <p className="text-sm text-muted-foreground line-clamp-2">
+          <p className="text-[13px] text-muted-foreground line-clamp-2">
             {experience.description}
           </p>
         )}
 
         {/* Location */}
         {experience.city && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
             <MapPin className="h-4 w-4 text-primary/70" />
             <span>{experience.city}</span>
           </div>
@@ -78,21 +78,21 @@ export function ExperienceCard({ experience, index, onSelect }: ExperienceCardPr
         {/* Next date info */}
         {nextDate && (
           <div className="pt-4 border-t border-border/50 space-y-2">
-            <div className="flex items-center gap-2 text-sm">
+          <div className="flex items-center gap-2 text-[13px]">
               <Calendar className="h-4 w-4 text-primary/70" />
               <span className="font-medium">
                 {format(new Date(nextDate.start_datetime), "EEEE d MMMM", { locale: it })}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
                 <Clock className="h-4 w-4" />
                 <span>
                   {format(new Date(nextDate.start_datetime), "HH:mm")} -{" "}
                   {format(new Date(nextDate.end_datetime), "HH:mm")}
                 </span>
               </div>
-              <div className="flex items-center gap-1 text-sm">
+              <div className="flex items-center gap-1 text-[11px]">
                 <Users className="h-4 w-4 text-primary/70" />
                 <span className={availableSpots <= 3 ? "text-destructive font-medium" : "text-muted-foreground"}>
                   {availableSpots} posti

@@ -118,7 +118,7 @@ export function BookingCard({
       {/* Content */}
       <div className="pt-2 space-y-1">
         {/* Title */}
-        <h3 className="text-[13px] font-medium text-foreground line-clamp-2 leading-snug group-hover:text-primary transition-colors">
+        <h3 className="text-[13px] font-medium text-foreground line-clamp-2 leading-snug transition-colors">
           {experience.title}
         </h3>
 

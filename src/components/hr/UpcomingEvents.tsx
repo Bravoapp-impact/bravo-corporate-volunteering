@@ -23,10 +23,10 @@ export function UpcomingEvents({ events }: UpcomingEventsProps) {
     return (
       <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
         <CardHeader>
-          <CardTitle className="text-lg">Prossimi Eventi</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground text-center py-8">
+        <CardTitle className="text-base font-semibold">Prossimi Eventi</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-[13px] text-muted-foreground text-center py-8">
             Nessun evento in programma
           </p>
         </CardContent>
@@ -37,7 +37,7 @@ export function UpcomingEvents({ events }: UpcomingEventsProps) {
   return (
     <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
       <CardHeader>
-        <CardTitle className="text-lg">Prossimi Eventi</CardTitle>
+        <CardTitle className="text-base font-semibold">Prossimi Eventi</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         {events.map((event, index) => (

@@ -58,13 +58,13 @@ export function SDGImpactGrid({ sdgImpacts }: SDGImpactGridProps) {
                     {sdg.icon}
                   </div>
                   <div>
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
                       SDG {impact.code.replace('sdg_', '')}
                     </p>
-                    <p className="text-sm font-medium text-foreground mt-0.5 line-clamp-2">
+                    <p className="text-[13px] font-medium text-foreground mt-0.5 line-clamp-2">
                       {sdg.name}
                     </p>
-                    <p className="text-base font-bold mt-1" style={{ color: sdg.color }}>
+                    <p className="text-xl font-bold mt-1" style={{ color: sdg.color }}>
                       {impact.hours.toFixed(1)}h
                     </p>
                   </div>
