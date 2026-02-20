@@ -83,7 +83,8 @@ export default function HRDashboard() {
             )
           )
         `)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(1000);
 
       // Filter bookings by company employees
       const companyBookings = bookingsData?.filter((b) => companyUserIds.has(b.user_id)) || [];
@@ -143,26 +144,33 @@ export default function HRDashboard() {
         .order("start_datetime", { ascending: true })
         .limit(10);
 
-      // Count company participants for each upcoming event
-      const upcomingEvents = await Promise.all(
-        (upcomingDates || []).map(async (date) => {
-          const { count } = await supabase
-            .from("bookings")
-            .select("*", { count: "exact", head: true })
-            .eq("experience_date_id", date.id)
-            .eq("status", "confirmed")
-            .in("user_id", Array.from(companyUserIds));
+      // Batch: fetch all company participant counts for upcoming events in a single query
+      const upcomingDateIds = (upcomingDates || []).map((d) => d.id);
+      const companyUserIdsArray = Array.from(companyUserIds);
+      const participantsMap = new Map<string, number>();
 
-          return {
-            id: date.id,
-            experience_title: date.experiences?.title || "",
-            city: date.experiences?.city || null,
-            start_datetime: date.start_datetime,
-            company_participants: count || 0,
-            max_participants: date.max_participants,
-          };
-        })
-      );
+      if (upcomingDateIds.length > 0 && companyUserIdsArray.length > 0) {
+        const { data: upcomingBookings } = await supabase
+          .from("bookings")
+          .select("experience_date_id")
+          .in("experience_date_id", upcomingDateIds)
+          .eq("status", "confirmed")
+          .in("user_id", companyUserIdsArray);
+
+        (upcomingBookings || []).forEach((b) => {
+          const prev = participantsMap.get(b.experience_date_id) || 0;
+          participantsMap.set(b.experience_date_id, prev + 1);
+        });
+      }
+
+      const upcomingEvents = (upcomingDates || []).map((date) => ({
+        id: date.id,
+        experience_title: date.experiences?.title || "",
+        city: date.experiences?.city || null,
+        start_datetime: date.start_datetime,
+        company_participants: participantsMap.get(date.id) || 0,
+        max_participants: date.max_participants,
+      }));
 
       // Filter to only show events with at least one company participant, limit to 4
       const eventsWithParticipants = upcomingEvents

@@ -2,27 +2,7 @@ import { useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ExperienceCardCompact } from "./ExperienceCardCompact";
-
-interface ExperienceDate {
-  id: string;
-  start_datetime: string;
-  end_datetime: string;
-  max_participants: number;
-  confirmed_count?: number;
-}
-
-interface Experience {
-  id: string;
-  title: string;
-  description: string | null;
-  image_url: string | null;
-  association_name: string | null;
-  association_logo_url?: string | null;
-  city: string | null;
-  address: string | null;
-  category: string | null;
-  experience_dates?: ExperienceDate[];
-}
+import type { Experience } from "@/types/experiences";
 
 interface ExperienceSectionProps {
   title: string;

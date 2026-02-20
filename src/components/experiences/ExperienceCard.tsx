@@ -5,26 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { BaseCardImage } from "@/components/common/BaseCardImage";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
-
-interface ExperienceDate {
-  id: string;
-  start_datetime: string;
-  end_datetime: string;
-  max_participants: number;
-  confirmed_count?: number;
-}
-
-interface Experience {
-  id: string;
-  title: string;
-  description: string | null;
-  image_url: string | null;
-  association_name: string | null;
-  city: string | null;
-  address: string | null;
-  category: string | null;
-  experience_dates?: ExperienceDate[];
-}
+import type { Experience, ExperienceDate } from "@/types/experiences";
 
 interface ExperienceCardProps {
   experience: Experience;
